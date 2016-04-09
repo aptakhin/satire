@@ -10,13 +10,11 @@ enum LexemType {
 enum ParseState {
     Wait,
     KeywordThenName,
-    NameThenCall,
 }
 
 struct Lexem {
     lexem_type: LexemType,
     content: String,
-    start_iter: usize,
 }
 
 trait Lexer {
@@ -41,7 +39,6 @@ impl CommonLexer {
 struct FileSource {
     file: String,
     line: i32,
-    id_iter: usize,
 }
 
 struct Unit {
@@ -55,7 +52,6 @@ impl Lexer for CommonLexer {
     fn next(&mut self) -> Option<Lexem> {
         let mut read = String::new();
         let mut lexem_type = LexemType::Unknown;
-        let start_iter = self.read_iter;
 
         loop {
             if let Some(ch) = self.buffer.chars().nth(self.read_iter) {
@@ -78,8 +74,6 @@ impl Lexer for CommonLexer {
                     },
                     LexemType::Token => {
                         if is_whitespace {
-                            break;
-                        } else if ch == '(' || ch == ')' {
                             break;
                         }
                     },
@@ -107,7 +101,6 @@ impl Lexer for CommonLexer {
         Some(Lexem {
             lexem_type: lexem_type,
             content: read,
-            start_iter: start_iter,
         })
     }
 }
@@ -134,8 +127,7 @@ fn main() {
 
     lexems.push(Lexem{
         lexem_type: LexemType::Newline,
-        content: String::from("\n"),
-        start_iter: 0,
+        content: String::from("\n")
     });
 
     loop {
@@ -147,7 +139,6 @@ fn main() {
     }
 
     let mut units = vec![];
-    let mut use_units = vec![];
 
     let mut parse_state = ParseState::Wait;
 
@@ -155,15 +146,11 @@ fn main() {
 
     let mut lex_iter = 0;
 
-    let mut use_unit_name = String::new();
     let mut unit_type = String::new();
 
     loop {
         let ref cur = lexems[lex_iter];
         let ref fmt = cur.content;
-
-        println!("S0: {} ({:?})", fmt, parse_state);
-
 
         match cur.lexem_type {
             LexemType::Newline => {
@@ -179,11 +166,6 @@ fn main() {
                         if fmt == "struct" || fmt == "fn" {
                             unit_type = fmt.to_string();
                             parse_state = ParseState::KeywordThenName;
-                        } else if fmt == "{" || fmt == "}" {
-                            // Skip this yet
-                        } else { // if like identifier
-                            use_unit_name = fmt.to_string();
-                            parse_state = ParseState::NameThenCall;
                         }
                     },
                     _ => {},
@@ -199,7 +181,6 @@ fn main() {
                             source: FileSource{
                                 file: String::from("src.rs"),
                                 line: line_counter,
-                                id_iter: cur.start_iter,
                             }
                         });
                         parse_state = ParseState::Wait;
@@ -207,31 +188,7 @@ fn main() {
                     _ => {},
                 }
             },
-            ParseState::NameThenCall => {
-                match cur.lexem_type {
-                    LexemType::Token => {
-                        if fmt == "(" {
-                            let unit_path = vec![use_unit_name.clone()];
-                            use_units.push(Unit{
-                                unit_type: String::from("fn"),
-                                path: unit_path,
-                                source: FileSource{
-                                    file: String::from("src.rs"),
-                                    line: line_counter,
-                                    id_iter: cur.start_iter,
-                                }
-                            });
-                        } else {
-                            parse_state = ParseState::Wait;
-                            use_unit_name = String::new();
-                        }
-                    },
-                    _ => {},
-                }
-            },
         }
-
-        println!("  -> ({:?})", parse_state);
 
         if lex_iter == lexems.len() - 1 {
             break;
@@ -242,10 +199,6 @@ fn main() {
 
     for unit in units {
         println!("U: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
-    }
-
-    for unit in use_units {
-        println!("UU: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
     }
 
     let mut words: HashSet<&str> = HashSet::new();
