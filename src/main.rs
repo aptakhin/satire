@@ -42,6 +42,7 @@ struct FileSource {
     file: String,
     line: i32,
     id_iter: usize,
+    lexem_iter: usize,
 }
 
 struct Unit {
@@ -49,7 +50,6 @@ struct Unit {
     path: Vec<String>,
     source: FileSource,
 }
-
 
 impl Lexer for CommonLexer {
     fn next(&mut self) -> Option<Lexem> {
@@ -156,6 +156,7 @@ fn main() {
     let mut lex_iter = 0;
 
     let mut use_unit_name = String::new();
+    let mut use_lex_iter = 0;
     let mut unit_type = String::new();
 
     loop {
@@ -183,6 +184,7 @@ fn main() {
                             // Skip this yet
                         } else { // if like identifier
                             use_unit_name = fmt.to_string();
+                            use_lex_iter = lex_iter;
                             parse_state = ParseState::NameThenCall;
                         }
                     },
@@ -200,6 +202,7 @@ fn main() {
                                 file: String::from("src.rs"),
                                 line: line_counter,
                                 id_iter: cur.start_iter,
+                                lexem_iter: lex_iter,
                             }
                         });
                         parse_state = ParseState::Wait;
@@ -219,8 +222,10 @@ fn main() {
                                     file: String::from("src.rs"),
                                     line: line_counter,
                                     id_iter: cur.start_iter,
+                                    lexem_iter: use_lex_iter,
                                 }
                             });
+                            println!("CC: {}, {}", use_lex_iter, lexems[use_lex_iter].content);
                         } else {
                             parse_state = ParseState::Wait;
                             use_unit_name = String::new();
@@ -240,12 +245,20 @@ fn main() {
         lex_iter += 1;
     }
 
-    for unit in units {
+    for unit in &units {
         println!("U: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
     }
 
-    for unit in use_units {
+    for unit in &use_units {
         println!("UU: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
+
+        let ref path = unit.path[0];
+        let res = &units.iter().find(|u| *u.path[0] == path.to_string());
+
+        for u in res {
+            println!("Z: {}", u.path[0]);
+            lexems[unit.source.lexem_iter].content = format!("<a href=\"#l{}\">{}</a>", u.source.line, lexems[unit.source.lexem_iter].content);
+        }
     }
 
     let mut words: HashSet<&str> = HashSet::new();
@@ -270,7 +283,7 @@ fn main() {
 
         match lexem.lexem_type {
             LexemType::Newline => {
-                fmt = format!("{}<a name=\"line{}\">", fmt, line_counter);
+                fmt = format!("{}<a name=\"l{}\">", fmt, line_counter);
                 line_counter += 1;
             },
             _ => {},
