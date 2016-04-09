@@ -8,6 +8,9 @@ use indexer::lexer::Lexem;
 use indexer::lexer::Lexer;
 use indexer::lexer::LexemType;
 use indexer::lexer::CommonLexer;
+use indexer::storage::Unit;
+use indexer::storage::FileSource;
+use indexer::storage::Context;
 
 #[derive(Debug)]
 pub enum ParseState {
@@ -16,30 +19,8 @@ pub enum ParseState {
     NameThenCall,
 }
 
-pub struct FileSource {
-    file: String,
-    line: i32,
-    id_iter: usize,
-    lexem_iter: usize,
-}
-
-pub struct Unit {
-    unit_type: String,
-    path: Vec<String>,
-    source: FileSource,
-}
-
 pub struct CommonParser {
     pub lexems: Vec<Lexem>,
-}
-
-pub trait LL {
-    fn next();
-}
-
-impl LL for CommonParser {
-    fn next()  {
-    }
 }
 
 impl CommonParser {
@@ -49,7 +30,8 @@ impl CommonParser {
         }
     }
 
-    pub fn parse(&mut self) {
+    pub fn parse(&mut self) -> Context {
+        let mut ctx = Context::new();
 
         let input = File::open("test/src.rs").unwrap();
 
@@ -73,9 +55,6 @@ impl CommonParser {
                 break;
             }
         }
-
-        let mut units = vec![];
-        let mut use_units = vec![];
 
         let mut parse_state = ParseState::Wait;
 
@@ -123,7 +102,7 @@ impl CommonParser {
                     match cur.lexem_type {
                         LexemType::Token => {
                             let unit_path = vec![cur.content.clone()];
-                            units.push(Unit{
+                            ctx.units.push(Unit{
                                 unit_type: unit_type.clone(),
                                 path: unit_path,
                                 source: FileSource{
@@ -143,7 +122,7 @@ impl CommonParser {
                         LexemType::Token => {
                             if fmt == "(" {
                                 let unit_path = vec![use_unit_name.clone()];
-                                use_units.push(Unit{
+                                ctx.use_units.push(Unit{
                                     unit_type: String::from("fn"),
                                     path: unit_path,
                                     source: FileSource{
@@ -173,61 +152,61 @@ impl CommonParser {
             lex_iter += 1;
         }
 
-        for unit in &units {
-            println!("U: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
-        }
+        ctx
 
-        for unit in &use_units {
-            println!("UU: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
-
-            let ref path = unit.path[0];
-            let res = &units.iter().find(|u| *u.path[0] == path.to_string());
-
-            for u in res {
-                println!("Z: {}", u.path[0]);
-                self.lexems[unit.source.lexem_iter].content = format!("<a href=\"#l{}\">{}</a>", u.source.line, self.lexems[unit.source.lexem_iter].content);
-            }
-        }
-
-        let mut words: HashSet<&str> = HashSet::new();
-        words.insert("struct");
-        words.insert("use");
-        words.insert("fn");
-        words.insert("let");
-        //HashSet<str> = vec!(b"struct", b"main()").iter().collect();
-
-        {
-            //let x = &lexems[0];
-            //println!("F: {} ({:?})", x.content, x.lexem_type);
-        }
-
-
-
-        let output = File::create("test/src.rs.html").unwrap();
-        let mut writer = BufWriter::new(output);
-
-        let mut out = String::new();
-        out.push_str("<pre>");
-
-        line_counter = 1;
-        for lexem in &self.lexems {
-            //println!("G: {} ({:?})", lexem.content, lexem.lexem_type);
-            let ref fmt = &lexem.content;
-
-            match lexem.lexem_type {
-                LexemType::Newline => {
-                    //fmt = format!("{}<a name=\"l{}\">", fmt, line_counter);
-                    line_counter += 1;
-                },
-                _ => {},
-            }
-
-            if words.contains(&fmt[..]) {
-                //fmt = format!("<b>{}</b>", fmt);
-            }
-            out.push_str(&fmt[..]);
-        }
-        out.push_str("</pre>");
-        writer.write(out.as_bytes()).unwrap();
+        // for unit in &units {
+        //     println!("U: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
+        // }
+        //
+        // for unit in &use_units {
+        //     println!("UU: {}, {}, {}:{}", unit.unit_type, unit.path[0], unit.source.file, unit.source.line);
+        //
+        //     let ref path = unit.path[0];
+        //     let res = &units.iter().find(|u| *u.path[0] == path.to_string());
+        //
+        //     for u in res {
+        //         println!("Z: {}", u.path[0]);
+        //         self.lexems[unit.source.lexem_iter].content = format!("<a href=\"#l{}\">{}</a>", u.source.line, self.lexems[unit.source.lexem_iter].content);
+        //     }
+        // }
+        //
+        // let mut words: HashSet<&str> = HashSet::new();
+        // words.insert("struct");
+        // words.insert("use");
+        // words.insert("fn");
+        // words.insert("let");
+        // //HashSet<str> = vec!(b"struct", b"main()").iter().collect();
+        //
+        // {
+        //     //let x = &lexems[0];
+        //     //println!("F: {} ({:?})", x.content, x.lexem_type);
+        // }
+        //
+        // let output = File::create("test/src.rs.html").unwrap();
+        // let mut writer = BufWriter::new(output);
+        //
+        // let mut out = String::new();
+        // out.push_str("<pre>");
+        //
+        // line_counter = 1;
+        // for lexem in &self.lexems {
+        //     //println!("G: {} ({:?})", lexem.content, lexem.lexem_type);
+        //     let ref fmt = &lexem.content;
+        //
+        //     match lexem.lexem_type {
+        //         LexemType::Newline => {
+        //             //fmt = format!("{}<a name=\"l{}\">", fmt, line_counter);
+        //             line_counter += 1;
+        //         },
+        //         _ => {},
+        //     }
+        //
+        //     if words.contains(&fmt[..]) {
+        //         //fmt = format!("<b>{}</b>", fmt);
+        //     }
+        //     out.push_str(&fmt[..]);
+        // }
+        // out.push_str("</pre>");
+        // writer.write(out.as_bytes()).unwrap();
     }
 }
