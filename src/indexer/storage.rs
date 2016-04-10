@@ -1,6 +1,9 @@
 
+use indexer::parser::Tagged;
+
+#[derive(Clone, Copy)]
 pub struct FileSource {
-    pub file: String,
+    //pub file: String,
     pub line: i32,
     pub id_iter: usize,
     pub lexem_iter: usize,
@@ -18,12 +21,12 @@ pub struct Unit {
     pub source: FileSource,
 }
 
-pub trait Tagged {
-    //fn get_type(self) -> String;
-    //fn get_source(self) -> FileSource;
-    fn get_content(&self) -> String;
-    fn render_html(&self) -> String;
-}
+// pub trait Tagged {
+//     //fn get_type(self) -> String;
+//     //fn get_source(self) -> FileSource;
+//     fn get_content(&self) -> String;
+//     fn render_html(&self) -> String;
+// }
 
 pub struct Context {
     pub all_tagged: Vec<Box<Tagged>>,
