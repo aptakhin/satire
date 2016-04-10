@@ -1,5 +1,28 @@
+use std::io::prelude::*;
+use std::io::BufReader;
+use std::fs::File;
+use std::fmt;
 
 use indexer::parser::Tagged;
+
+pub struct SourceFile {
+    pub filename: String,
+    pub content: String,
+}
+
+impl SourceFile {
+    pub fn new(filename: String) -> SourceFile {
+        let input = File::open(&filename).unwrap();
+        let mut reader = BufReader::new(input);
+        let mut content = String::new();
+        reader.read_to_string(&mut content).unwrap();
+
+        SourceFile {
+            filename: filename.clone(),
+            content: content,
+        }
+    }
+}
 
 #[derive(Clone, Copy)]
 pub struct FileSource {
@@ -12,6 +35,12 @@ pub struct FileSource {
 impl FileSource {
     pub fn render_html(&self, name: &str) -> String {
         format!("<a href=\"#l{}\">{}</a>", self.line, name)
+    }
+}
+
+impl fmt::Debug for FileSource {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.line)
     }
 }
 

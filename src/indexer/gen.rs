@@ -5,11 +5,13 @@ use std::fs::File;
 use indexer::parser::Tagged;
 use indexer::storage::FileSource;
 
+#[derive(Debug)]
 pub enum Style {
     Normal,
     Bold,
 }
 
+#[derive(Debug)]
 pub enum HtmlItem {
     Plain { content: String, style: Style },
     Newline { this_line: i32 },
@@ -61,6 +63,7 @@ pub fn to_html(tagged: &Vec<Box<Tagged>>) -> Vec<Box<HtmlItem>> {
     let mut items = vec![];
 
     for tag in tagged.iter() {
+        println!("{:?}", tag);
         let item = Box::new(to_html_tag(tag));
         items.push(item);
     }
@@ -72,12 +75,14 @@ pub fn to_file(filename: String, items: &Vec<Box<HtmlItem>>) {
     let output = File::create(filename).unwrap();
     let mut writer = BufWriter::new(output);
 
+    println!("---------------------------");
     let mut out = String::new();
     out.push_str("<pre>");
 
     let mut line_counter = 1;
     for item in items.iter() {
         let fmt = render_html(item);
+        println!("{:?}| {}", item, &fmt[..]);
         out.push_str(&fmt[..]);
     }
     out.push_str("</pre>");
