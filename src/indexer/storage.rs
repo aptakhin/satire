@@ -15,35 +15,19 @@ impl FileSource {
     }
 }
 
-pub struct Unit {
-    pub unit_type: String,
-    pub path: Vec<String>,
-    pub source: FileSource,
-}
-
-// pub trait Tagged {
-//     //fn get_type(self) -> String;
-//     //fn get_source(self) -> FileSource;
-//     fn get_content(&self) -> String;
-//     fn render_html(&self) -> String;
-// }
-
 pub struct Context {
     pub all_tagged: Vec<Box<Tagged>>,
-    //pub use_units: Vec<Unit>,
 }
 
 impl Context {
     pub fn new() -> Context {
         Context {
             all_tagged: vec![],
-            //use_units: vec![],
         }
     }
 
     pub fn merge(&mut self, mut ctx: Context) {
         self.all_tagged.append(&mut ctx.all_tagged);
-        //self.use_units.append(&mut ctx.use_units);
     }
 
     pub fn gen(&mut self) {

@@ -1,13 +1,9 @@
-use std::io::prelude::*;
-use std::io::BufWriter;
-use std::fs::File;
 use std::collections::HashSet;
 
 use indexer::lexer::Lexem;
 use indexer::lexer::Lexer;
 use indexer::lexer::LexemType;
 use indexer::lexer::CommonLexer;
-use indexer::storage::Unit;
 use indexer::storage::FileSource;
 use indexer::storage::Context;
 
@@ -21,12 +17,6 @@ pub enum ParseState {
 pub struct CommonParser {
     pub buffer: String,
     pub lexems: Vec<Lexem>,
-}
-
-pub struct Definition {
-    pub unit_type: String,
-    pub path: Vec<String>,
-    pub source: FileSource,
 }
 
 pub enum Tagged {

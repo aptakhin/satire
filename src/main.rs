@@ -2,14 +2,11 @@ extern crate satire;
 
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::io::BufWriter;
 use std::fs::File;
 
 use satire::indexer::parser::CommonParser;
 use satire::indexer::storage::Storage;
-use satire::indexer::storage::FileSource;
-use satire::indexer::gen::to_file;
-use satire::indexer::gen::to_html;
+use satire::indexer::gen;
 
 fn main() {
     let mut storage = Storage::new();
@@ -22,6 +19,6 @@ fn main() {
     let mut parser = CommonParser::new(buffer);
     let ctx = parser.parse();
 
-    let html = to_html(&ctx.all_tagged);
-    to_file(String::from("test/src.rs.html"), &html);
+    let html = gen::to_html(&ctx.all_tagged);
+    gen::to_file(String::from("test/src.rs.html"), &html);
 }

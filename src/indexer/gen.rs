@@ -18,20 +18,20 @@ pub enum HtmlItem {
 
 fn render_html(item: &HtmlItem) -> String {
     match item {
-        &HtmlItem::Plain { content: ref content, style: ref style } => {
+        &HtmlItem::Plain { ref content, ref style } => {
             match style {
                 &Style::Normal => content.clone(),
                 &Style::Bold => format!("<b>{}</b>", content),
             }
         },
-        &HtmlItem::Newline { this_line: this_line } => {
+        &HtmlItem::Newline { this_line } => {
             if this_line == 1 {
                 format!("<a name=\"l{}\">", this_line)
             } else {
                 format!("\n<a name=\"l{}\">", this_line)
             }
         },
-        &HtmlItem::Reference { path: ref path, defs: ref defs } => {
+        &HtmlItem::Reference { ref path, ref defs } => {
             path[0].clone()
         },
     }
@@ -39,19 +39,19 @@ fn render_html(item: &HtmlItem) -> String {
 
 pub fn to_html_tag(tagged: &Tagged) -> HtmlItem {
     match tagged {
-        &Tagged::Definition { unit_type: ref unit_type, path: ref path, source: ref source } => {
+        &Tagged::Definition { ref unit_type, ref path, ref source } => {
             HtmlItem::Plain{ content: path[0].clone(), style: Style::Normal }
         },
-        &Tagged::Calling { unit_type: ref unit_type, path: ref path, source: ref source, defs: ref defs } => {
+        &Tagged::Calling { ref unit_type, ref path, ref source, ref defs } => {
             HtmlItem::Reference{ path: path.clone(), defs: defs.clone() }
         },
-        &Tagged::Newline { source: ref source } => {
+        &Tagged::Newline { ref source } => {
             HtmlItem::Newline{ this_line: source.line }
         },
-        &Tagged::Keyword { content: ref content, source: ref source } => {
+        &Tagged::Keyword { ref content, ref source } => {
             HtmlItem::Plain{ content: content.clone(), style: Style::Bold }
         },
-        &Tagged::Text { content: ref content, source: ref source } => {
+        &Tagged::Text { ref content, ref source } => {
             HtmlItem::Plain{ content: content.clone(), style: Style::Normal }
         },
     }
