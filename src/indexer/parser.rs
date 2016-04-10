@@ -10,6 +10,7 @@ use indexer::lexer::CommonLexer;
 use indexer::storage::Unit;
 use indexer::storage::FileSource;
 use indexer::storage::Context;
+use indexer::storage::Tagged;
 
 #[derive(Debug)]
 pub enum ParseState {
@@ -23,14 +24,74 @@ pub struct CommonParser {
     pub lexems: Vec<Lexem>,
 }
 
-pub enum ParserItemType {
-    Define,
-    Use,
-    Text,
+pub struct Definition {
+    pub unit_type: String,
+    pub path: Vec<String>,
+    pub source: FileSource,
 }
 
-pub struct ParserItem {
-    pub item_type: ParserItemType,
+impl Tagged for Definition {
+    fn get_content(&self) -> String {
+        self.path[0].clone()
+    }
+
+    fn render_html(&self) -> String {
+        self.path[0].clone()
+    }
+}
+
+pub struct Calling {
+    pub unit_type: String,
+    pub path: Vec<String>,
+    pub source: FileSource,
+    pub origins: Vec<FileSource>,
+}
+
+impl Tagged for Calling {
+    fn get_content(&self) -> String {
+        self.path[0].clone()
+    }
+
+    fn render_html(&self) -> String {
+        if self.origins.len() > 0 {
+            self.origins[0].render_html(&self.path[0][..])
+        } else {
+            self.path[0].clone()
+        }
+    }
+}
+
+pub struct Newline {
+    pub source: FileSource,
+}
+
+impl Tagged for Newline {
+    fn get_content(&self) -> String {
+        String::from("\n")
+    }
+
+    fn render_html(&self) -> String {
+        if self.source.line == 1 {
+            format!("<a name=\"l{}\">", self.source.line)
+        } else {
+            format!("\n<a name=\"l{}\">", self.source.line)
+        }
+    }
+}
+
+pub struct Text {
+    pub content: String,
+    pub source: FileSource,
+}
+
+impl Tagged for Text {
+    fn get_content(&self) -> String {
+        self.content.clone()
+    }
+
+    fn render_html(&self) -> String {
+        self.content.clone()
+    }
 }
 
 impl CommonParser {
@@ -68,17 +129,29 @@ impl CommonParser {
 
         let mut use_unit_name = String::new();
         let mut use_lex_iter = 0;
+        let mut use_id_iter = 0;
         let mut unit_type = String::new();
 
         loop {
             let ref cur = &self.lexems[lex_iter];
             let ref fmt = cur.content;
 
-            println!("S0: {} ({:?})", fmt, parse_state);
+            //println!("S0: {} ({:?})", fmt, parse_state);
+
+            let mut added = false;
 
             match cur.lexem_type {
                 LexemType::Newline => {
                     line_counter += 1;
+                    ctx.all_tagged.push(Box::new(Newline {
+                        source: FileSource{
+                            file: String::from("src.rs"),
+                            line: line_counter,
+                            id_iter: cur.start_iter,
+                            lexem_iter: lex_iter,
+                        }
+                    }));
+                    added = true;
                 }
                 _ => {},
             }
@@ -95,6 +168,7 @@ impl CommonParser {
                             } else { // if like identifier
                                 use_unit_name = fmt.to_string();
                                 use_lex_iter = lex_iter;
+                                use_id_iter = cur.start_iter;
                                 parse_state = ParseState::NameThenCall;
                             }
                         },
@@ -105,7 +179,7 @@ impl CommonParser {
                     match cur.lexem_type {
                         LexemType::Token => {
                             let unit_path = vec![cur.content.clone()];
-                            ctx.units.push(Unit{
+                            ctx.all_tagged.push(Box::new(Definition {
                                 unit_type: unit_type.clone(),
                                 path: unit_path,
                                 source: FileSource{
@@ -114,7 +188,8 @@ impl CommonParser {
                                     id_iter: cur.start_iter,
                                     lexem_iter: lex_iter,
                                 }
-                            });
+                            }));
+                            added = true;
                             parse_state = ParseState::Wait;
                         },
                         _ => {},
@@ -125,17 +200,31 @@ impl CommonParser {
                         LexemType::Token => {
                             if fmt == "(" {
                                 let unit_path = vec![use_unit_name.clone()];
-                                ctx.use_units.push(Unit{
-                                    unit_type: String::from("fn"),
+                                ctx.all_tagged.push(Box::new(Calling {
+                                    unit_type: String::from("call_fn"),
                                     path: unit_path,
                                     source: FileSource{
                                         file: String::from("src.rs"),
                                         line: line_counter,
-                                        id_iter: cur.start_iter,
+                                        id_iter: use_id_iter,
                                         lexem_iter: use_lex_iter,
+                                    },
+                                    origins: vec![],
+                                }));
+
+                                ctx.all_tagged.push(Box::new(Text {
+                                    content: fmt.clone(),
+                                    source: FileSource{
+                                        file: String::from("src.rs"),
+                                        line: line_counter,
+                                        id_iter: cur.start_iter,
+                                        lexem_iter: lex_iter,
                                     }
-                                });
+                                }));
+
+                                added = true;
                                 println!("CC: {}, {}", use_lex_iter, &self.lexems[use_lex_iter].content);
+                                println!("DD: {}, {}", &self.lexems[lex_iter].content, fmt);
                             } else {
                                 parse_state = ParseState::Wait;
                                 use_unit_name = String::new();
@@ -146,7 +235,20 @@ impl CommonParser {
                 },
             }
 
-            println!("  -> ({:?})", parse_state);
+            if !added {
+                ctx.all_tagged.push(Box::new(Text {
+                    content: fmt.clone(),
+                    source: FileSource{
+                        file: String::from("src.rs"),
+                        line: line_counter,
+                        id_iter: cur.start_iter,
+                        lexem_iter: lex_iter,
+                    }
+                }));
+                added = true;
+            }
+
+            //println!("  -> ({:?})", parse_state);
 
             if lex_iter == &self.lexems.len() - 1 {
                 break;

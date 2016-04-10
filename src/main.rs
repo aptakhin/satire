@@ -9,9 +9,7 @@ use satire::indexer::parser::CommonParser;
 use satire::indexer::storage::Storage;
 use satire::indexer::storage::FileSource;
 use satire::indexer::gen::to_file;
-use satire::indexer::gen::HtmlItem;
-use satire::indexer::gen::Reference;
-use std::collections::LinkedList;
+use satire::indexer::gen::to_html;
 
 fn main() {
     let mut storage = Storage::new();
@@ -23,18 +21,7 @@ fn main() {
 
     let mut parser = CommonParser::new(buffer);
     let ctx = parser.parse();
-    storage.merge(ctx);
 
-    let mut items: Vec<Box<HtmlItem>> = vec![Box::new(Reference{
-        content: String::from("xx"),
-        source: FileSource {
-            file: String::from("test/src.rs.html"),
-            line: 0,
-            id_iter: 0,
-            lexem_iter: 0,
-        },
-    })];
-
-    to_file(String::from("test/src.rs.html"), items, &storage);
-
+    let html = to_html(&ctx.all_tagged);
+    to_file(String::from("test/src.rs.html"), &html);
 }
