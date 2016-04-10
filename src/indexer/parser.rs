@@ -186,6 +186,7 @@ impl CommonParser {
                             lexem_iter: lex_iter,
                         }
                     }));
+                    parser_state = ParserState::Wait;
 
                     added = true;
                 }
@@ -193,7 +194,7 @@ impl CommonParser {
 
             if !added {
                 match parser_state {
-                    ParserState::NameThenCall => {},
+                    //ParserState::NameThenCall => {},
                     _ => {
                         ctx.all_tagged.push(Box::new(Tagged::Text {
                             content: fmt.clone(),

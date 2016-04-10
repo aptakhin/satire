@@ -59,8 +59,29 @@ impl Context {
         self.all_tagged.append(&mut ctx.all_tagged);
     }
 
-    pub fn gen(&mut self) {
+    pub fn find(&self, path: &String) -> Option<Tagged> {
+        // for tag in self.all_tagged.iter() {
+        //     match tag {
+        //         Tagged::Definition { ref unit_type, ref path, ref source } => {
+        //             //return Some(tag)
+        //         },
+        //         _ => {}
+        //     }
+        // }
+        None
+    }
 
+    pub fn gen(&self) {
+        for tag in &self.all_tagged.iter() {
+            match tag {
+                &Tagged::Calling { ref unit_type, ref path, ref source, ref defs } => {
+                    // if let Some(p) = self.find(&path[0]) {
+                    //     println!("Matched!");
+                    // }
+                },
+                _ => {},
+            }
+        }
     }
 }
 

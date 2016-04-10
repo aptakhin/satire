@@ -11,7 +11,9 @@ fn main() {
     let source = SourceFile::new("test/src.rs".to_string());
 
     let mut parser = CommonParser::new(source.content);
-    let ctx = parser.parse();
+    let mut ctx = parser.parse();
+
+    ctx.gen();
 
     let html = gen::to_html(&ctx.all_tagged);
     gen::to_file("test/src.rs.html".to_string(), &html);
