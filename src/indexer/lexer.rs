@@ -18,13 +18,13 @@ pub trait Lexer {
     fn next(&mut self) -> Option<Lexem>;
 }
 
-pub struct CommonLexer {
-    pub buffer: String,
+pub struct CommonLexer<'a> {
+    pub buffer: &'a String,
     pub read_iter: usize,
 }
 
-impl CommonLexer {
-    pub fn new(buffer: String) -> CommonLexer {
+impl<'a> CommonLexer<'a> {
+    pub fn new(buffer: &String) -> CommonLexer {
         CommonLexer {
             buffer: buffer,
             read_iter: 0,
@@ -32,7 +32,7 @@ impl CommonLexer {
     }
 }
 
-impl Lexer for CommonLexer {
+impl<'a> Lexer for CommonLexer<'a> {
     fn next(&mut self) -> Option<Lexem> {
         let mut read = String::new();
         let mut lexem_type = LexemType::Unknown;

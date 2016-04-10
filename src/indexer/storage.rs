@@ -12,6 +12,11 @@ pub struct Unit {
     pub source: FileSource,
 }
 
+pub trait Marked {
+    fn get_type(self) -> String;
+    fn get_source(self) -> FileSource;
+}
+
 pub struct Context {
     pub units: Vec<Unit>,
     pub use_units: Vec<Unit>,
@@ -28,6 +33,10 @@ impl Context {
     pub fn merge(&mut self, mut ctx: Context) {
         self.units.append(&mut ctx.units);
         self.use_units.append(&mut ctx.use_units);
+    }
+
+    pub fn gen(&mut self) {
+
     }
 }
 
@@ -47,6 +56,6 @@ impl Storage {
     }
 
     pub fn gen(&mut self) {
-
+        self.ctx.gen();
     }
 }

@@ -28,7 +28,11 @@ pub struct Newline {
 
 impl HtmlItem for Newline {
     fn render(&self) -> String {
-        format!("\n<a name=\"l{}\">", self.this_line)
+        if self.this_line == 1 {
+            format!("<a name=\"l{}\">", self.this_line)
+        } else {
+            format!("\n<a name=\"l{}\">", self.this_line)
+        }
     }
 }
 

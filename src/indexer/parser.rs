@@ -1,5 +1,4 @@
 use std::io::prelude::*;
-use std::io::BufReader;
 use std::io::BufWriter;
 use std::fs::File;
 use std::collections::HashSet;
@@ -20,12 +19,24 @@ pub enum ParseState {
 }
 
 pub struct CommonParser {
+    pub buffer: String,
     pub lexems: Vec<Lexem>,
 }
 
+pub enum ParserItemType {
+    Define,
+    Use,
+    Text,
+}
+
+pub struct ParserItem {
+    pub item_type: ParserItemType,
+}
+
 impl CommonParser {
-    pub fn new() -> CommonParser {
+    pub fn new(buffer: String) -> CommonParser {
         CommonParser {
+            buffer: buffer,
             lexems: vec![],
         }
     }
@@ -33,14 +44,7 @@ impl CommonParser {
     pub fn parse(&mut self) -> Context {
         let mut ctx = Context::new();
 
-        let input = File::open("test/src.rs").unwrap();
-
-        let mut reader = BufReader::new(input);
-        let mut buffer = String::new();
-
-        reader.read_to_string(&mut buffer).unwrap();
-
-        let mut lexer = CommonLexer::new(buffer);
+        let mut lexer = CommonLexer::new(&self.buffer);
 
         self.lexems.push(Lexem{
             lexem_type: LexemType::Newline,
@@ -71,7 +75,6 @@ impl CommonParser {
             let ref fmt = cur.content;
 
             println!("S0: {} ({:?})", fmt, parse_state);
-
 
             match cur.lexem_type {
                 LexemType::Newline => {
