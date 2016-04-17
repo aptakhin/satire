@@ -24,7 +24,7 @@ pub enum Tagged {
     Definition(String),
     Calling(String),
     Whitespace(WhitespaceType),
-
+    Comment,
     Keyword(String),
 }
 
@@ -95,7 +95,7 @@ pub struct KwMatch;
 impl<'a> FuzzyRule<'a> for KwMatch {
     fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
         use indexer::lexer::Token::*;
-        println!("Q: {:?}", tokens[0].0);
+        //println!("Q: {:?}", tokens[0].0);
         match tokens[0].0 {
             &Fn => FuzzyRuleState::Ready(
                 vec![(Tagged::Keyword("fn".to_string()), tokens[0].1.clone())]
@@ -103,17 +103,32 @@ impl<'a> FuzzyRule<'a> for KwMatch {
             &Use => FuzzyRuleState::Ready(
                 vec![(Tagged::Keyword("use".to_string()), tokens[0].1.clone())]
             ),
+            &Struct => FuzzyRuleState::Ready(
+                vec![(Tagged::Keyword("struct".to_string()), tokens[0].1.clone())]
+            ),
+            &Pub => FuzzyRuleState::Ready(
+                vec![(Tagged::Keyword("pub".to_string()), tokens[0].1.clone())]
+            ),
+            &Let => FuzzyRuleState::Ready(
+                vec![(Tagged::Keyword("let".to_string()), tokens[0].1.clone())]
+            ),
+            &Impl => FuzzyRuleState::Ready(
+                vec![(Tagged::Keyword("impl".to_string()), tokens[0].1.clone())]
+            ),
+            &Comment => FuzzyRuleState::Ready(
+                vec![(Tagged::Comment, tokens[0].1.clone())]
+            ),
             &Whitespace(ref wh) => {
-                println!("WH: {:?} {:?}", tokens[0].0, wh);
+                //println!("WH: {:?} {:?}", tokens[0].0, wh);
                 match wh {
                     &WhitespaceType::Newline => {
-                        println!("Rz: {:?}", wh);
+                        //println!("Rz: {:?}", wh);
                         FuzzyRuleState::Ready(
                             vec![(Tagged::Whitespace(WhitespaceType::Newline), tokens[0].1.clone())]
                         )
                     },
                     &WhitespaceType::Spaces => {
-                        println!("Bz: {:?}", wh);
+                        //println!("Bz: {:?}", wh);
                         FuzzyRuleState::NotMatches
                     }
                 }
@@ -143,23 +158,23 @@ impl<'a> FuzzyParser<'a> {
     }
 
     fn push(&mut self, lex: (&'a Token, &'a Span)) -> Vec<(Tagged, Span)> {
-        println!("P: {:?}, {:?}", lex.0, lex.1);
+        //println!("P: {:?}, {:?}", lex.0, lex.1);
         if self.cache.len() == self.size {
             self.cache.pop_front();
         }
 
         self.cache.push_back(lex);
-        println!("{:?}", self.cache);
+        //println!("{:?}", self.cache);
 
         for rule in &mut self.rules {
             //let () = rule;
             let res = rule.match_tokens(&self.cache);
-            println!("R: {:?}", res);
+            //println!("R: {:?}", res);
             match res {
                 FuzzyRuleState::NotMatches => {},
                 FuzzyRuleState::Cont(usize) => {},
                 FuzzyRuleState::Ready(e) => {
-                    println!("Matched! {:?}", self.cache);
+                    //println!("Matched! {:?}", self.cache);
                     self.cache.clear();
                     return e
                 },
@@ -269,7 +284,7 @@ impl CommonParser {
         for &(ref tok, ref span) in &self.lexems {
             let lsyn = syntax_parser.push((tok, span));
             if lsyn.len() != 0 {
-                println!("PR: {:?}", lsyn);
+                //println!("PR: {:?}", lsyn);
                 syntax_parser_out.extend(lsyn);
             }
 

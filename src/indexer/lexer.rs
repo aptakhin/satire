@@ -17,16 +17,13 @@ pub enum Token {
     Use,
     Struct,
     Fn,
+    Pub,
+    Impl,
+    Let,
+    Mut,
 
-    Integer(i64),
-    Equals,
-    Plus,
-    Minus,
-    Star,
-    Slash,
     LParen,
     RParen,
-    Semi,
 
     Whitespace(WhitespaceType),
     Comment,
@@ -49,25 +46,15 @@ lexer! {
     r#"use"# => (Token::Use, text),
     r#"struct"# => (Token::Struct, text),
     r#"fn"# => (Token::Fn, text),
-
-    r#"[0-9]+"# => {
-        (if let Ok(i) = text.parse() {
-            Token::Integer(i)
-        } else {
-            panic!("integer {} is out of range", text)
-        }, text)
-    },
+    r#"pub"# => (Token::Pub, text),
+    r#"impl"# => (Token::Impl, text),
+    r#"let"# => (Token::Let, text),
+    r#"mut"# => (Token::Mut, text),
 
     r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::Ident(text.to_owned()), text),
 
-    r#"="# => (Token::Equals, text),
-    r#"\+"# => (Token::Plus, text),
-    r#"-"# => (Token::Minus, text),
-    r#"\*"# => (Token::Star, text),
-    r#"/"# => (Token::Slash, text),
     r#"\("# => (Token::LParen, text),
     r#"\)"# => (Token::RParen, text),
-    r#";"# => (Token::Semi, text),
 
     r#"."# => (Token::Other, text),
 }
