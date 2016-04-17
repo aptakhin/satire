@@ -31,18 +31,38 @@ pub enum Tagged {
 //     fn on_rule(&self, tokens: Vec<Token>) -> Tagged;
 // }
 
+enum FuzzyRuleState {
+    NotMatches,
+    Cont(i32, i32),
+    Ready(Vec<(Tagged, Span)>),
+}
+
+
+pub trait FuzzyRule {
+    fn match(&mut self, &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState;
+}
+
 pub trait FuzzyCallback<'a> {
     fn on_tokens(&mut self, &VecDeque<(&'a Token, &'a Span)>) -> Vec<(Tagged, Span)>;
 }
 
-pub struct FuzzyRule<'a> {
+pub struct FuzzyTokenRule<'a> {
     pub tokens: Vec<Token>,
     pub callback: Box<FuzzyCallback<'a>>,
 }
 
-impl<'a> FuzzyRule<'a> {
-    fn new(tokens: Vec<Token>, callback: Box<FuzzyCallback<'a>>) -> FuzzyRule<'a> {
-        FuzzyRule {
+impl<'a> FuzzyTokenRule<'a> {
+    fn new(tokens: Vec<Token>, callback: Box<FuzzyCallback<'a>>) -> FuzzyTokenRule<'a> {
+        FuzzyTokenRule {
+            tokens: tokens,
+            callback: callback,
+        }
+    }
+}
+
+impl FuzzyRule for FuzzyTokenRule {
+    fn new(tokens: Vec<Token>, callback: Box<FuzzyCallback<'a>>) -> FuzzyTokenRule<'a> {
+        FuzzyTokenRule {
             tokens: tokens,
             callback: callback,
         }
@@ -92,7 +112,7 @@ impl<'a> FuzzyParser<'a> {
                 let mut iter = 0;
                 let mut matched = true;
                 for rule_token in &rule.tokens {
-                    println!("A {:?} {:?}", rule_token, self.cache[iter].0);
+                    //println!("A {:?} {:?}", rule_token, self.cache[iter].0);
                     if !token_eq(rule_token, self.cache[iter].0) {
                         matched = false;
                         break;
@@ -210,8 +230,10 @@ impl CommonParser {
         };
         let fn_rule = FuzzyRule::new(vec![Fn, Ident(String::new()), LParen], Box::new(Fnn{}));
         let call_fn_rule = FuzzyRule::new(vec![Ident(String::new()), LParen], Box::new(CallFn{}));
+        let kw_rule = FuzzyMatchRule::new(Box::new(KwMatch{}));
         //
         let mut parser = FuzzyParser::new(vec![fn_rule, call_fn_rule]);
+        let mut syntax_parser = FuzzyParser::new(vec![kw_rule]);
 
         let mut parser_out = vec![];
 
