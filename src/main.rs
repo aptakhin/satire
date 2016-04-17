@@ -15,8 +15,8 @@ fn main() {
 
 
     //
-    // ctx.gen();
+    let baked = ctx.gen();
     //
     // let html = gen::to_html(&ctx.all_tagged);
-    gen::to_file("test/src.rs.html".to_string(), &source.content, &ctx.syntax[..]);
+    gen::to_file("test/src.rs.html".to_string(), &source.content, &baked[..]);
 }

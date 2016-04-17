@@ -6,8 +6,9 @@ use indexer::parser::Tagged;
 use indexer::lexer::Span;
 use indexer::lexer::WhitespaceType;
 use indexer::storage::FileSource;
+use indexer::storage::Info;
 
-pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span)]) {
+pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) {
     let output = File::create(filename).unwrap();
     let mut writer = BufWriter::new(output);
 
@@ -15,9 +16,8 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span)]) {
     let mut out = String::new();
     out.push_str("<pre>");
 
-    let mut line_counter = 1;
     let mut till = 0;
-    for &(ref tagged, ref span) in items {
+    for &(ref tagged, ref span, ref info) in items {
         out.push_str(&content[till..span.lo]);
         let mut fmt = String::new();
         let cnt = &content[span.lo..span.hi];
@@ -30,13 +30,12 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span)]) {
             },
             &Tagged::Whitespace(ref wh) => {
                 match wh {
-                    &WhitespaceType::Newline => {
+                    &WhitespaceType::Newline(line_counter) => {
                         if line_counter == 1 {
                             fmt = format!("<a name=\"l{}\">", line_counter);
                         } else {
                             fmt = format!("\n<a name=\"l{}\">", line_counter);
                         }
-                        line_counter += 1;
                     },
                     _ => { fmt = cnt.to_string() },
                 }

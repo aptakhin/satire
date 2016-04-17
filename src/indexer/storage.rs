@@ -39,6 +39,10 @@ impl FileSource {
     }
 }
 
+pub struct Info {
+
+}
+
 impl fmt::Debug for FileSource {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.line)
@@ -76,21 +80,17 @@ impl Context {
     //     //println!("  R: {:?}", found);
     //     found
     // }
-    //
-    // pub fn gen(&self) {
-    //     for tag in self.all_tagged.iter() {
-    //         let tagged: &Tagged = &tag;
-    //         match tagged {
-    //             &Tagged::Calling { ref unit_type, ref path, ref source, ref defs } => {
-    //                 //println!("FC: {:?}", tagged);
-    //                 if let Some(p) = self.find(&path[0]) {
-    //                     println!("Matched!");
-    //                 }
-    //             },
-    //             _ => {},
-    //         }
-    //     }
-    // }
+
+    pub fn gen(&self) -> Vec<(Tagged, Span, Option<Box<Info>>)> {
+        let mut res = vec![];
+
+        for i in 0..self.syntax.len() {
+            let &(ref tagged, ref span) = &self.syntax[i];
+            res.push((tagged.clone(), span.clone(), None));
+        }
+
+        res
+    }
 }
 
 // pub struct Storage {

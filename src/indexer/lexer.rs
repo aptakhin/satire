@@ -4,7 +4,7 @@ use std::io::Read;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum WhitespaceType {
-    Newline,
+    Newline(usize),
     Spaces,
     //Tabs(i32),
     //Spaces(i32),
@@ -35,7 +35,7 @@ pub enum Token {
 lexer! {
     fn next_token(text: 'a) -> (Token, &'a str);
 
-    r#"[\n]"# => (Token::Whitespace(WhitespaceType::Newline), text),
+    r#"[\n]"# => (Token::Whitespace(WhitespaceType::Newline(0)), text),
     //r#"\r\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
     r#"[ \t]+"# => (Token::Whitespace(WhitespaceType::Spaces), text),
     // "C-style" comments (/* .. */) - can't contain "*/"

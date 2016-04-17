@@ -1,3 +1,7 @@
-use std;
+fn foo() -> String {
+    return "abc".to_string();
+}
 
-fn call() { }
+fn main() {
+    println("{}", foo());
+}
