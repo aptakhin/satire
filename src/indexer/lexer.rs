@@ -31,6 +31,7 @@ pub enum Token {
     Whitespace(WhitespaceType),
     Comment,
 
+    Eof,
     Other,
 }
 
@@ -102,7 +103,7 @@ impl<'a> Iterator for CommonLexer<'a> {
             let tok = if let Some(tok) = next_token(&mut self.remaining) {
                 tok
             } else {
-                return None
+                return Some((Token::Eof, Span{lo: self.original.len(), hi: self.original.len()}))
             };
             match tok {
                 (Token::Whitespace(_), _) | (Token::Comment, _) => {

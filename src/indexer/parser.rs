@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::collections::vec_deque::VecDeque;
 use std::intrinsics::discriminant_value;
+use std::cmp::max;
 
 use indexer::lexer::{CommonLexer, Token, Span};
 use indexer::storage::FileSource;
@@ -31,15 +32,15 @@ pub enum Tagged {
 //     fn on_rule(&self, tokens: Vec<Token>) -> Tagged;
 // }
 
-enum FuzzyRuleState {
+pub enum FuzzyRuleState {
     NotMatches,
-    Cont(i32, i32),
+    Cont(usize),
     Ready(Vec<(Tagged, Span)>),
 }
 
 
-pub trait FuzzyRule {
-    fn match(&mut self, &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState;
+pub trait FuzzyRule<'a> {
+    fn match_tokens(&mut self, &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState;
 }
 
 pub trait FuzzyCallback<'a> {
@@ -59,12 +60,27 @@ impl<'a> FuzzyTokenRule<'a> {
         }
     }
 }
+impl<'a> FuzzyRule<'a> for FuzzyTokenRule<'a> {
+    fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
+        let till = max(self.tokens.len(), tokens.len());
+        let mut matched = 0;
 
-impl FuzzyRule for FuzzyTokenRule {
-    fn new(tokens: Vec<Token>, callback: Box<FuzzyCallback<'a>>) -> FuzzyTokenRule<'a> {
-        FuzzyTokenRule {
-            tokens: tokens,
-            callback: callback,
+        for i in 0..till {
+            if token_eq(&self.tokens[i], &tokens[i].0) {
+                matched += 1;
+            } else {
+                matched = 0;
+                break;
+            }
+        }
+
+        if matched == 0 {
+            FuzzyRuleState::NotMatches
+        } else if matched == self.tokens.len() {
+            let res = self.callback.on_tokens(tokens);
+            FuzzyRuleState::Ready(res)
+        } else {
+            FuzzyRuleState::Cont(self.tokens.len())
         }
     }
 }
@@ -78,15 +94,29 @@ pub fn token_eq(a: &Token, b: &Token) -> bool {
     }
 }
 
+pub struct KwMatch;
+
+impl<'a> FuzzyRule<'a> for KwMatch {
+    fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
+        use indexer::lexer::Token::*;
+        match tokens[0].0 {
+            &Fn => FuzzyRuleState::Ready(
+                vec![(Tagged::Keyword("fn".to_string()), tokens[0].1.clone())]
+            ),
+            _ => FuzzyRuleState::NotMatches,
+        }
+    }
+}
+
 pub struct FuzzyParser<'a> {
-    pub rules: Vec<FuzzyRule<'a>>,
+    pub rules: Vec<Box<FuzzyRule<'a>>>,
     pub size: usize,
     pub cache: VecDeque<(&'a Token, &'a Span)>,
     pub variants: Vec<usize>,
 }
 
 impl<'a> FuzzyParser<'a> {
-    fn new(rules: Vec<FuzzyRule<'a>>) -> FuzzyParser<'a> {
+    fn new(rules: Vec<Box<FuzzyRule<'a>>>) -> FuzzyParser<'a> {
         let size = 5;
         FuzzyParser {
             rules: rules,
@@ -101,47 +131,24 @@ impl<'a> FuzzyParser<'a> {
         if self.cache.len() == self.size {
             self.cache.pop_front();
         }
-        //self.rules[0].callback.on_tokens(&self.cache);
 
         self.cache.push_back(lex);
         println!("{:?}", self.cache);
 
         for rule in &mut self.rules {
             //let () = rule;
-            if rule.tokens.len() <= self.cache.len() {
-                let mut iter = 0;
-                let mut matched = true;
-                for rule_token in &rule.tokens {
-                    //println!("A {:?} {:?}", rule_token, self.cache[iter].0);
-                    if !token_eq(rule_token, self.cache[iter].0) {
-                        matched = false;
-                        break;
-                    }
-                    iter += 1;
-                }
-
-                if matched {
-                    println!("Matched! {:?}", rule.tokens);
-                    // let mut cc = vec![];
-                    //
-                    // for x in &self.cache {
-                    //     let (&wtok, &wspan) = *x;
-                    //     cc.push(*x);
-                    // }
-
-                    let res = rule.callback.on_tokens(&self.cache);
-
+            let res = rule.match_tokens(&self.cache);
+            match res {
+                FuzzyRuleState::NotMatches => {},
+                FuzzyRuleState::Cont(usize) => {},
+                FuzzyRuleState::Ready(e) => {
+                    println!("Matched! {:?}", self.cache);
                     self.cache.clear();
-
-                    return res
-                }
+                    return e
+                },
             }
         }
 
-        vec![]
-    }
-
-    fn finish(&mut self) -> Vec<(Tagged, Span)> {
         vec![]
     }
 }
@@ -220,7 +227,10 @@ impl CommonParser {
         let mut lexer = CommonLexer::new(&self.buffer);
 
         for (tok, span) in lexer {
-            self.lexems.push((tok, span));
+            match tok {
+                Token::Eof => { self.lexems.push((tok, span)); break; }
+                _ => { self.lexems.push((tok, span));},
+            }
         }
 
         let mut preproc = CPreprocessing{};
@@ -228,25 +238,34 @@ impl CommonParser {
         let callback = |tokens: &Vec<(&Token, &Span)>| -> Vec<(Tagged, Span)> {
             vec![]
         };
-        let fn_rule = FuzzyRule::new(vec![Fn, Ident(String::new()), LParen], Box::new(Fnn{}));
-        let call_fn_rule = FuzzyRule::new(vec![Ident(String::new()), LParen], Box::new(CallFn{}));
-        let kw_rule = FuzzyMatchRule::new(Box::new(KwMatch{}));
+        let fn_rule = FuzzyTokenRule::new(vec![Fn, Ident(String::new()), LParen], Box::new(Fnn{}));
+        let call_fn_rule = FuzzyTokenRule::new(vec![Ident(String::new()), LParen], Box::new(CallFn{}));
+        let kw_rule = Box::new(KwMatch{});
         //
-        let mut parser = FuzzyParser::new(vec![fn_rule, call_fn_rule]);
+        let mut parser = FuzzyParser::new(vec![Box::new(fn_rule), Box::new(call_fn_rule)]);
         let mut syntax_parser = FuzzyParser::new(vec![kw_rule]);
 
-        let mut parser_out = vec![];
+        let mut syntax_parser_out = vec![];
+        //let mut parser_out = vec![];
 
         for &(ref tok, ref span) in &self.lexems {
-            if let Some((wtok, wspan)) = preproc.filter((tok, span)) {
-                let res = parser.push((wtok, wspan));
-
-                if res.len() != 0 {
-                    println!("PR: {:?}", res);
-                    parser_out.extend(res);
-                }
+            let lsyn = syntax_parser.push((tok, span));
+            if lsyn.len() != 0 {
+                println!("PR: {:?}", lsyn);
+                syntax_parser_out.extend(lsyn);
             }
+
+            // if let Some((wtok, wspan)) = preproc.filter((tok, span)) {
+            //     let res = parser.push((wtok, wspan));
+            //
+            //     if res.len() != 0 {
+            //         println!("PR: {:?}", res);
+            //         parser_out.extend(res);
+            //     }
+            // }
         }
+
+        println!("SYN: {:?}", syntax_parser_out);
 
         // let program = parse(lexer);
         //
