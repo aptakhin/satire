@@ -38,8 +38,8 @@ pub enum Token {
 lexer! {
     fn next_token(text: 'a) -> (Token, &'a str);
 
-    r#"\r\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
-    r#"\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
+    r#"[\n]"# => (Token::Whitespace(WhitespaceType::Newline), text),
+    //r#"\r\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
     r#"[ \t]+"# => (Token::Whitespace(WhitespaceType::Spaces), text),
     // "C-style" comments (/* .. */) - can't contain "*/"
     r#"/[*](~(.*[*]/.*))[*]/"# => (Token::Comment, text),

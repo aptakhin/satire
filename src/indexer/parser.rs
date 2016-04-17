@@ -133,7 +133,7 @@ pub struct FuzzyParser<'a> {
 
 impl<'a> FuzzyParser<'a> {
     fn new(rules: Vec<Box<FuzzyRule<'a>>>) -> FuzzyParser<'a> {
-        let size = 5;
+        let size = 1;
         FuzzyParser {
             rules: rules,
             size: size,
@@ -240,6 +240,8 @@ impl CommonParser {
         use indexer::lexer::Token::*;
 
         let mut lexer = CommonLexer::new(&self.buffer);
+
+        self.lexems.push((Token::Whitespace(WhitespaceType::Newline), Span{lo: 0, hi: 0}));
 
         for (tok, span) in lexer {
             println!("L: {:?} {:?}", tok, span);

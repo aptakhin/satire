@@ -93,7 +93,11 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span)]) {
             &Tagged::Whitespace(ref wh) => {
                 match wh {
                     &WhitespaceType::Newline => {
-                        fmt = format!("\n<a name=\"l{}\">", line_counter);
+                        if line_counter == 1 {
+                            fmt = format!("<a name=\"l{}\">", line_counter);
+                        } else {
+                            fmt = format!("\n<a name=\"l{}\">", line_counter);
+                        }
                         line_counter += 1;
                     },
                     _ => { fmt = content[span.lo..span.hi].to_string() },
