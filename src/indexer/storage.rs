@@ -59,30 +59,37 @@ impl Context {
         self.all_tagged.append(&mut ctx.all_tagged);
     }
 
-    pub fn find(&self, path: &String) -> Option<Tagged> {
-        // for tag in self.all_tagged.iter() {
-        //     match tag {
-        //         Tagged::Definition { ref unit_type, ref path, ref source } => {
-        //             //return Some(tag)
-        //         },
-        //         _ => {}
-        //     }
-        // }
-        None
-    }
-
-    pub fn gen(&self) {
-        for tag in &self.all_tagged.iter() {
-            match tag {
-                &Tagged::Calling { ref unit_type, ref path, ref source, ref defs } => {
-                    // if let Some(p) = self.find(&path[0]) {
-                    //     println!("Matched!");
-                    // }
-                },
-                _ => {},
-            }
-        }
-    }
+    // pub fn find(&self, path: &String) -> Option<&Tagged> {
+    //     let mut found = None;
+    //     for tag in self.all_tagged.iter() {
+    //         let tagged: &Tagged = &tag;
+    //         //println!("  l: {:?}", tagged);
+    //         match tagged {
+    //             &Tagged::Definition { ref unit_type, ref path, ref source } => {
+    //                 found = Some(tagged);
+    //                 break
+    //             },
+    //             _ => {},
+    //         }
+    //     }
+    //     //println!("  R: {:?}", found);
+    //     found
+    // }
+    //
+    // pub fn gen(&self) {
+    //     for tag in self.all_tagged.iter() {
+    //         let tagged: &Tagged = &tag;
+    //         match tagged {
+    //             &Tagged::Calling { ref unit_type, ref path, ref source, ref defs } => {
+    //                 //println!("FC: {:?}", tagged);
+    //                 if let Some(p) = self.find(&path[0]) {
+    //                     println!("Matched!");
+    //                 }
+    //             },
+    //             _ => {},
+    //         }
+    //     }
+    // }
 }
 
 pub struct Storage {
@@ -101,6 +108,6 @@ impl Storage {
     }
 
     pub fn gen(&mut self) {
-        self.ctx.gen();
+        //self.ctx.gen();
     }
 }

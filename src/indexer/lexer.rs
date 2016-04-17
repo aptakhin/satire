@@ -1,94 +1,117 @@
-use std::io::prelude::*;
 
-#[derive(Debug)]
-pub enum LexemType {
-    Unknown,
-    Whitespace,
+use std::io::Read;
+//use std::io::prelude::*;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum WhitespaceType {
     Newline,
-    Token,
+    Spaces,
+    //Tabs(i32),
+    //Spaces(i32),
 }
 
-pub struct Lexem {
-    pub lexem_type: LexemType,
-    pub content: String,
-    pub start_iter: usize,
+#[derive(Debug, Clone)]
+pub enum Token {
+    Ident(String),
+
+    Use,
+    Struct,
+    Fn,
+
+    Integer(i64),
+    Equals,
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    LParen,
+    RParen,
+    Semi,
+
+    Whitespace(WhitespaceType),
+    Comment,
+
+    Other,
 }
 
-pub trait Lexer {
-    fn next(&mut self) -> Option<Lexem>;
+lexer! {
+    fn next_token(text: 'a) -> (Token, &'a str);
+
+    r#"\r\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
+    r#"[ \t]+"# => (Token::Whitespace(WhitespaceType::Spaces), text),
+    // "C-style" comments (/* .. */) - can't contain "*/"
+    r#"/[*](~(.*[*]/.*))[*]/"# => (Token::Comment, text),
+    // "C++-style" comments (// ...)
+    r#"//[^\n]*"# => (Token::Comment, text),
+
+    r#"use"# => (Token::Use, text),
+    r#"struct"# => (Token::Struct, text),
+    r#"fn"# => (Token::Fn, text),
+
+    r#"[0-9]+"# => {
+        (if let Ok(i) = text.parse() {
+            Token::Integer(i)
+        } else {
+            panic!("integer {} is out of range", text)
+        }, text)
+    },
+
+    r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::Ident(text.to_owned()), text),
+
+    r#"="# => (Token::Equals, text),
+    r#"\+"# => (Token::Plus, text),
+    r#"-"# => (Token::Minus, text),
+    r#"\*"# => (Token::Star, text),
+    r#"/"# => (Token::Slash, text),
+    r#"\("# => (Token::LParen, text),
+    r#"\)"# => (Token::RParen, text),
+    r#";"# => (Token::Semi, text),
+
+    r#"."# => (Token::Other, text),
 }
 
 pub struct CommonLexer<'a> {
-    pub buffer: &'a String,
-    pub read_iter: usize,
+    original: &'a str,
+    remaining: &'a str,
 }
 
 impl<'a> CommonLexer<'a> {
-    pub fn new(buffer: &String) -> CommonLexer {
-        CommonLexer {
-            buffer: buffer,
-            read_iter: 0,
-        }
+    pub fn new(s: &'a str) -> CommonLexer<'a> {
+        CommonLexer { original: s, remaining: s }
     }
 }
 
-impl<'a> Lexer for CommonLexer<'a> {
-    fn next(&mut self) -> Option<Lexem> {
-        let mut read = String::new();
-        let mut lexem_type = LexemType::Unknown;
-        let start_iter = self.read_iter;
+#[derive(Debug, Clone, Copy)]
+pub struct Span {
+    pub lo: usize,
+    pub hi: usize,
+}
 
+fn span_in(s: &str, t: &str) -> Span {
+    let lo = s.as_ptr() as usize - t.as_ptr() as usize;
+    Span {
+        lo: lo,
+        hi: lo + s.len(),
+    }
+}
+
+impl<'a> Iterator for CommonLexer<'a> {
+    type Item = (Token, Span);
+    fn next(&mut self) -> Option<(Token, Span)> {
         loop {
-            if let Some(ch) = self.buffer.chars().nth(self.read_iter) {
-                let is_whitespace = ch.is_whitespace();
-                match lexem_type {
-                    LexemType::Unknown => {
-                        if ch == '\r' {
-                            lexem_type = LexemType::Newline;
-                            self.read_iter += 2;
-                            read = String::from("\n");
-                            break
-                        } else if ch == '\n' {
-                            lexem_type = LexemType::Newline;
-                        } else if is_whitespace {
-                            lexem_type = LexemType::Whitespace;
-                        }
-                        else {
-                            lexem_type = LexemType::Token;
-                        }
-                    },
-                    LexemType::Token => {
-                        if is_whitespace {
-                            break;
-                        } else if ch == '(' || ch == ')' {
-                            break;
-                        }
-                    },
-                    LexemType::Newline => {
-                        break;
-                    },
-                    LexemType::Whitespace => {
-                        if !is_whitespace {
-                            break;
-                        }
-                    },
+            let tok = if let Some(tok) = next_token(&mut self.remaining) {
+                tok
+            } else {
+                return None
+            };
+            match tok {
+                (Token::Whitespace(_), _) | (Token::Comment, _) => {
+                    continue;
                 }
-
-                self.read_iter += 1;
-                read.push_str(&ch.to_string());
-            }
-            else {
-                match lexem_type {
-                    LexemType::Unknown => return None,
-                    _ => break,
+                (tok, span) => {
+                    return Some((tok, span_in(span, self.original)));
                 }
             }
         }
-
-        Some(Lexem {
-            lexem_type: lexem_type,
-            content: read,
-            start_iter: start_iter,
-        })
     }
 }

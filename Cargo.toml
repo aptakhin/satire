@@ -4,11 +4,6 @@ name = "satire"
 version = "0.0.1"
 authors = [ "Alexander Ptakhin <me@aptakhin.name>" ]
 
-build = "build.rs"
-
-# Add a dependency on the LALRPOP runtime library:
-[dependencies.lalrpop-util]
-version = "0.11.0"
-
-[build-dependencies.lalrpop]
-version = "0.11.0"
+[dependencies]
+plex = "0.0.1"
+enum_primitive = "*"

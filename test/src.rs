@@ -1,8 +1,3 @@
-use std::io;
+use std;
 
-fn call() {
-}
-
-fn main() {
-    call();
-}
+fn call() { }
