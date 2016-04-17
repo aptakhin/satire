@@ -3,7 +3,7 @@ use std::collections::vec_deque::VecDeque;
 use std::intrinsics::discriminant_value;
 use std::cmp::max;
 
-use indexer::lexer::{CommonLexer, Token, Span};
+use indexer::lexer::{CommonLexer, Token, Span, WhitespaceType};
 use indexer::storage::FileSource;
 use indexer::storage::Context;
 
@@ -23,21 +23,17 @@ pub struct CommonParser {
 pub enum Tagged {
     Definition(String),
     Calling(String),
-    Whitespace,
+    Whitespace(WhitespaceType),
 
     Keyword(String),
 }
 
-// pub trait RuleCallback {
-//     fn on_rule(&self, tokens: Vec<Token>) -> Tagged;
-// }
-
+#[derive(Debug)]
 pub enum FuzzyRuleState {
     NotMatches,
     Cont(usize),
     Ready(Vec<(Tagged, Span)>),
 }
-
 
 pub trait FuzzyRule<'a> {
     fn match_tokens(&mut self, &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState;
@@ -99,10 +95,30 @@ pub struct KwMatch;
 impl<'a> FuzzyRule<'a> for KwMatch {
     fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
         use indexer::lexer::Token::*;
+        println!("Q: {:?}", tokens[0].0);
         match tokens[0].0 {
             &Fn => FuzzyRuleState::Ready(
                 vec![(Tagged::Keyword("fn".to_string()), tokens[0].1.clone())]
             ),
+            &Use => FuzzyRuleState::Ready(
+                vec![(Tagged::Keyword("use".to_string()), tokens[0].1.clone())]
+            ),
+            &Whitespace(ref wh) => {
+                println!("WH: {:?} {:?}", tokens[0].0, wh);
+                match wh {
+                    &WhitespaceType::Newline => {
+                        println!("Rz: {:?}", wh);
+                        FuzzyRuleState::Ready(
+                            vec![(Tagged::Whitespace(WhitespaceType::Newline), tokens[0].1.clone())]
+                        )
+                    },
+                    &WhitespaceType::Spaces => {
+                        println!("Bz: {:?}", wh);
+                        FuzzyRuleState::NotMatches
+                    }
+                }
+            },
+
             _ => FuzzyRuleState::NotMatches,
         }
     }
@@ -138,6 +154,7 @@ impl<'a> FuzzyParser<'a> {
         for rule in &mut self.rules {
             //let () = rule;
             let res = rule.match_tokens(&self.cache);
+            println!("R: {:?}", res);
             match res {
                 FuzzyRuleState::NotMatches => {},
                 FuzzyRuleState::Cont(usize) => {},
@@ -222,11 +239,10 @@ impl CommonParser {
     pub fn parse(&mut self) -> Context {
         use indexer::lexer::Token::*;
 
-        let mut ctx = Context::new();
-
         let mut lexer = CommonLexer::new(&self.buffer);
 
         for (tok, span) in lexer {
+            println!("L: {:?} {:?}", tok, span);
             match tok {
                 Token::Eof => { self.lexems.push((tok, span)); break; }
                 _ => { self.lexems.push((tok, span));},
@@ -267,183 +283,6 @@ impl CommonParser {
 
         println!("SYN: {:?}", syntax_parser_out);
 
-        // let program = parse(lexer);
-        //
-        // match program {
-        //     Ok(o) => {
-        //         for p in o.stmts {
-        //             println!("{:?}", p);
-        //         }
-        //     },
-        //     Err(e) => {
-        //         println!("Err: {:?}", e);
-        //     }
-        // }
-
-        let mut parser_state = ParserState::Wait;
-
-        let mut line_counter = 0;
-
-        let mut lex_iter = 0;
-
-        let mut use_unit_name = String::new();
-        let mut use_lex_iter = 0;
-        let mut use_id_iter = 0;
-        let mut unit_type = String::new();
-
-        let mut words: HashSet<&str> = HashSet::new();
-        words.insert("struct");
-        words.insert("use");
-        words.insert("fn");
-        words.insert("let");
-
-        // loop {
-        //     let ref cur = &self.lexems[lex_iter];
-        //     let ref fmt = cur.content;
-        //
-        //     //println!("S0: {} ({:?})", fmt, parser_state);
-        //
-        //     let mut added = false;
-        //
-        //     match cur.lexem_type {
-        //         LexemType::Newline => {
-        //             line_counter += 1;
-        //             ctx.all_tagged.push(Box::new(Tagged::Newline {
-        //                 source: FileSource{
-        //                     //file: String::from("src.rs"),
-        //                     line: line_counter,
-        //                     id_iter: cur.start_iter,
-        //                     lexem_iter: lex_iter,
-        //                 }
-        //             }));
-        //             added = true;
-        //         }
-        //         _ => {},
-        //     }
-        //
-        //     match parser_state {
-        //         ParserState::Wait => {
-        //             match cur.lexem_type {
-        //                 LexemType::Token => {
-        //                     if fmt == "struct" || fmt == "fn" {
-        //                         unit_type = fmt.to_string();
-        //                         parser_state = ParserState::KeywordThenName;
-        //                     } else if fmt == "{" || fmt == "}" || fmt == "(" || fmt == ")" {
-        //                         // Skip this yet
-        //                     } else { // if like identifier
-        //                         use_unit_name = fmt.to_string();
-        //                         use_lex_iter = lex_iter;
-        //                         use_id_iter = cur.start_iter;
-        //                         parser_state = ParserState::NameThenCall;
-        //                     }
-        //                 },
-        //                 _ => {},
-        //             }
-        //         },
-        //         ParserState::KeywordThenName => {
-        //             match cur.lexem_type {
-        //                 LexemType::Token => {
-        //                     let unit_path = vec![cur.content.clone()];
-        //                     ctx.all_tagged.push(Box::new(Tagged::Definition {
-        //                         unit_type: unit_type.clone(),
-        //                         path: unit_path,
-        //                         source: FileSource{
-        //                             //file: String::from("src.rs"),
-        //                             line: line_counter,
-        //                             id_iter: cur.start_iter,
-        //                             lexem_iter: lex_iter,
-        //                         }
-        //                     }));
-        //                     added = true;
-        //                     parser_state = ParserState::Wait;
-        //                 },
-        //                 _ => {},
-        //             }
-        //         },
-        //         ParserState::NameThenCall => {
-        //             match cur.lexem_type {
-        //                 LexemType::Token => {
-        //                     if fmt == "(" {
-        //                         let unit_path = vec![use_unit_name.clone()];
-        //                         ctx.all_tagged.push(Box::new(Tagged::Calling {
-        //                             unit_type: String::from("call_fn"),
-        //                             path: unit_path,
-        //                             source: FileSource{
-        //                                 //file: String::from("src.rs"),
-        //                                 line: line_counter,
-        //                                 id_iter: use_id_iter,
-        //                                 lexem_iter: use_lex_iter,
-        //                             },
-        //                             defs: vec![],
-        //                         }));
-        //
-        //                         ctx.all_tagged.push(Box::new(Tagged::Text {
-        //                             content: fmt.clone(),
-        //                             source: FileSource{
-        //                                 //file: String::from("src.rs"),
-        //                                 line: line_counter,
-        //                                 id_iter: cur.start_iter,
-        //                                 lexem_iter: lex_iter,
-        //                             }
-        //                         }));
-        //
-        //                         added = true;
-        //                         println!("CC: {}, {}", use_lex_iter, &self.lexems[use_lex_iter].content);
-        //                         println!("DD: {}, {}", &self.lexems[lex_iter].content, fmt);
-        //                     } else {
-        //                         parser_state = ParserState::Wait;
-        //                         use_unit_name = String::new();
-        //                     }
-        //                 },
-        //                 _ => {},
-        //             }
-        //         },
-        //     }
-        //
-        //     if !added {
-        //         if words.contains(&fmt[..]) {
-        //             ctx.all_tagged.push(Box::new(Tagged::Keyword {
-        //                 content: fmt.clone(),
-        //                 source: FileSource{
-        //                     //file: String::from("src.rs"),
-        //                     line: line_counter,
-        //                     id_iter: cur.start_iter,
-        //                     lexem_iter: lex_iter,
-        //                 }
-        //             }));
-        //             parser_state = ParserState::Wait;
-        //
-        //             added = true;
-        //         }
-        //     }
-        //
-        //     if !added {
-        //         match parser_state {
-        //             //ParserState::NameThenCall => {},
-        //             _ => {
-        //                 ctx.all_tagged.push(Box::new(Tagged::Text {
-        //                     content: fmt.clone(),
-        //                     source: FileSource{
-        //                         //file: String::from("src.rs"),
-        //                         line: line_counter,
-        //                         id_iter: cur.start_iter,
-        //                         lexem_iter: lex_iter,
-        //                     }
-        //                 }));
-        //                 added = true;
-        //             },
-        //         }
-        //     }
-        //
-        //     //println!("  -> ({:?})", parser_state);
-        //
-        //     if lex_iter == &self.lexems.len() - 1 {
-        //         break;
-        //     }
-        //
-        //     lex_iter += 1;
-        // }
-
-        ctx
+        return Context::new(syntax_parser_out);
     }
 }

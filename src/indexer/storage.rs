@@ -4,6 +4,7 @@ use std::fs::File;
 use std::fmt;
 
 use indexer::parser::Tagged;
+use indexer::lexer::Span;
 
 pub struct SourceFile {
     pub filename: String,
@@ -45,18 +46,18 @@ impl fmt::Debug for FileSource {
 }
 
 pub struct Context {
-    pub all_tagged: Vec<Box<Tagged>>,
+    pub syntax: Vec<(Tagged, Span)>,
 }
 
 impl Context {
-    pub fn new() -> Context {
+    pub fn new(syntax: Vec<(Tagged, Span)>) -> Context {
         Context {
-            all_tagged: vec![],
+            syntax: syntax,
         }
     }
 
     pub fn merge(&mut self, mut ctx: Context) {
-        self.all_tagged.append(&mut ctx.all_tagged);
+        //self.all_tagged.append(&mut ctx.all_tagged);
     }
 
     // pub fn find(&self, path: &String) -> Option<&Tagged> {
@@ -92,22 +93,22 @@ impl Context {
     // }
 }
 
-pub struct Storage {
-    pub ctx: Context,
-}
-
-impl Storage {
-    pub fn new() -> Storage {
-        Storage {
-            ctx: Context::new(),
-        }
-    }
-
-    pub fn merge(&mut self, mut merge_ctx: Context) {
-        self.ctx.merge(merge_ctx);
-    }
-
-    pub fn gen(&mut self) {
-        //self.ctx.gen();
-    }
-}
+// pub struct Storage {
+//     pub ctx: Context,
+// }
+//
+// impl Storage {
+//     pub fn new() -> Storage {
+//         Storage {
+//             ctx: Context::new(),
+//         }
+//     }
+//
+//     pub fn merge(&mut self, mut merge_ctx: Context) {
+//         self.ctx.merge(merge_ctx);
+//     }
+//
+//     pub fn gen(&mut self) {
+//         //self.ctx.gen();
+//     }
+// }

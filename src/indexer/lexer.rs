@@ -39,6 +39,7 @@ lexer! {
     fn next_token(text: 'a) -> (Token, &'a str);
 
     r#"\r\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
+    r#"\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
     r#"[ \t]+"# => (Token::Whitespace(WhitespaceType::Spaces), text),
     // "C-style" comments (/* .. */) - can't contain "*/"
     r#"/[*](~(.*[*]/.*))[*]/"# => (Token::Comment, text),
@@ -100,19 +101,11 @@ impl<'a> Iterator for CommonLexer<'a> {
     type Item = (Token, Span);
     fn next(&mut self) -> Option<(Token, Span)> {
         loop {
-            let tok = if let Some(tok) = next_token(&mut self.remaining) {
-                tok
+            if let Some((tok, span)) = next_token(&mut self.remaining) {
+                return Some((tok, span_in(span, self.original)));
             } else {
                 return Some((Token::Eof, Span{lo: self.original.len(), hi: self.original.len()}))
             };
-            match tok {
-                (Token::Whitespace(_), _) | (Token::Comment, _) => {
-                    continue;
-                }
-                (tok, span) => {
-                    return Some((tok, span_in(span, self.original)));
-                }
-            }
         }
     }
 }
