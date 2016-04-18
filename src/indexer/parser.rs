@@ -179,28 +179,57 @@ struct FnMatch;
 impl<'a> FuzzyRule<'a> for FnMatch {
     fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
         use indexer::lexer::Token::*;
-        //println!("Q: {:?}", tokens[0].0);
+        //println!("Q: {:?}", tokens[0]);
         //Fn, Ident(String::new()), LParen
         let mut res = FuzzyRuleState::NotMatches;
 
-        let rr = vec![Fn, Ident(String::new()), LParen];
-        let m = match_tokens(&rr, tokens);
+        {
+            let rr = vec![Fn, Ident(String::new()), LParen];
+            let m = match_tokens(&rr, tokens);
 
-        match m {
-            FuzzyRuleState::Cont(len) if len == tokens.len() => {
-                println!("W: {:?}", tokens);
+            match m {
+                FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                    //println!("W: {:?} {:?} {} {}", tokens, rr, len, rr.len());
 
-                let mut name = String::new();
-                match tokens[1].0 {
-                    &Token::Ident(ref n) => { name = n.clone(); },
-                    _ => {},
+                    let mut name = String::new();
+                    match tokens[1].0 {
+                        &Token::Ident(ref n) => { name = n.clone(); },
+                        _ => {},
+                    }
+
+                    res = FuzzyRuleState::Ready(vec![
+                        (Tagged::Definition(name), tokens[1].1.clone()),
+                    ]);
+                },
+                _ => { res = m },
+            }
+        }
+
+        match res {
+            FuzzyRuleState::NotMatches => {
+                //println!("J: {:?}", tokens);
+                let rr = vec![Ident(String::new()), LParen];
+                let m = match_tokens(&rr, tokens);
+
+                //println!("S: {:?}", m);
+                match m {
+                    FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                        //println!("W: {:?}", tokens);
+
+                        let mut name = String::new();
+                        match tokens[0].0 {
+                            &Token::Ident(ref n) => { name = n.clone(); },
+                            _ => {},
+                        }
+
+                        res = FuzzyRuleState::Ready(vec![
+                            (Tagged::Calling(name), tokens[0].1.clone()),
+                        ]);
+                    },
+                    _ => { res = m },
                 }
-
-                res = FuzzyRuleState::Ready(vec![
-                    (Tagged::Definition(name), tokens[1].1.clone()),
-                ]);
-            },
-            _ => { res = m },
+            }
+            _ => {},
         }
 
         res
