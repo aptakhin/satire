@@ -21,6 +21,8 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
         out.push_str(&content[till..span.lo]);
         let mut fmt = String::new();
         let cnt = &content[span.lo..span.hi];
+
+
         match tagged {
             &Tagged::Keyword(ref kw) => {
                 fmt = format!("<b>{}</b>", &cnt)

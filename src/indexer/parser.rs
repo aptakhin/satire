@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::collections::vec_deque::VecDeque;
 use std::intrinsics::discriminant_value;
-use std::cmp::max;
+use std::cmp::min;
 
 use indexer::lexer::{CommonLexer, Token, Span, WhitespaceType};
 use indexer::storage::FileSource;
@@ -25,7 +25,7 @@ pub enum Tagged {
     Calling(String),
     Whitespace(WhitespaceType),
     Comment,
-    Keyword(String),
+    Keyword(Token),
 }
 
 #[derive(Debug)]
@@ -58,7 +58,7 @@ impl<'a> FuzzyTokenRule<'a> {
 }
 impl<'a> FuzzyRule<'a> for FuzzyTokenRule<'a> {
     fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
-        let till = max(self.tokens.len(), tokens.len());
+        let till = min(self.tokens.len(), tokens.len());
         let mut matched = 0;
 
         for i in 0..till {
@@ -104,24 +104,10 @@ impl<'a> FuzzyRule<'a> for KwMatch {
     fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
         use indexer::lexer::Token::*;
         //println!("Q: {:?}", tokens[0].0);
+        //Fn, Ident(String::new()), LParen
         match tokens[0].0 {
-            &Fn => FuzzyRuleState::Ready(
-                vec![(Tagged::Keyword("fn".to_string()), tokens[0].1.clone())]
-            ),
-            &Use => FuzzyRuleState::Ready(
-                vec![(Tagged::Keyword("use".to_string()), tokens[0].1.clone())]
-            ),
-            &Struct => FuzzyRuleState::Ready(
-                vec![(Tagged::Keyword("struct".to_string()), tokens[0].1.clone())]
-            ),
-            &Pub => FuzzyRuleState::Ready(
-                vec![(Tagged::Keyword("pub".to_string()), tokens[0].1.clone())]
-            ),
-            &Let => FuzzyRuleState::Ready(
-                vec![(Tagged::Keyword("let".to_string()), tokens[0].1.clone())]
-            ),
-            &Impl => FuzzyRuleState::Ready(
-                vec![(Tagged::Keyword("impl".to_string()), tokens[0].1.clone())]
+            &Fn | &Use | &Struct | &Pub | &Let | &Impl => FuzzyRuleState::Ready(
+                vec![(Tagged::Keyword(tokens[0].0.clone()), tokens[0].1.clone())]
             ),
             &Comment => FuzzyRuleState::Ready(
                 vec![(Tagged::Comment, tokens[0].1.clone())]
@@ -149,6 +135,78 @@ impl<'a> FuzzyRule<'a> for KwMatch {
     }
 }
 
+fn match_tokens<'a>(rule_tokens: &[Token], tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
+    let till = min(rule_tokens.len(), tokens.len());
+    let mut matched = 0;
+
+    for i in 0..till {
+        if token_eq(&rule_tokens[i], &tokens[i].0) {
+            matched += 1;
+        } else {
+            matched = 0;
+            break;
+        }
+    }
+
+    if matched == 0 {
+        FuzzyRuleState::NotMatches
+    } else {
+        FuzzyRuleState::Cont(rule_tokens.len())
+    }
+}
+
+
+fn match3<'a>(tokens: &VecDeque<(&'a Token, &'a Span)>) -> (Token, Token, Token) {
+    let mut a = Token::NoToken;
+    let mut b = Token::NoToken;
+    let mut c = Token::NoToken;
+
+    if tokens.len() >= 1 {
+        a = tokens[0].0.clone();
+        if tokens.len() >= 2 {
+            b = tokens[1].0.clone();
+            if tokens.len() >= 3 {
+                c = tokens[2].0.clone();
+            }
+        }
+    }
+
+    (a, b, c)
+}
+
+struct FnMatch;
+
+impl<'a> FuzzyRule<'a> for FnMatch {
+    fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
+        use indexer::lexer::Token::*;
+        //println!("Q: {:?}", tokens[0].0);
+        //Fn, Ident(String::new()), LParen
+        let mut res = FuzzyRuleState::NotMatches;
+
+        let rr = vec![Fn, Ident(String::new()), LParen];
+        let m = match_tokens(&rr, tokens);
+
+        match m {
+            FuzzyRuleState::Cont(len) if len == tokens.len() => {
+                println!("W: {:?}", tokens);
+
+                let mut name = String::new();
+                match tokens[1].0 {
+                    &Token::Ident(ref n) => { name = n.clone(); },
+                    _ => {},
+                }
+
+                res = FuzzyRuleState::Ready(vec![
+                    (Tagged::Definition(name), tokens[1].1.clone()),
+                ]);
+            },
+            _ => { res = m },
+        }
+
+        res
+    }
+}
+
 pub struct FuzzyParser<'a> {
     pub rules: Vec<Box<FuzzyRule<'a>>>,
     pub size: usize,
@@ -157,8 +215,7 @@ pub struct FuzzyParser<'a> {
 }
 
 impl<'a> FuzzyParser<'a> {
-    fn new(rules: Vec<Box<FuzzyRule<'a>>>) -> FuzzyParser<'a> {
-        let size = 1;
+    fn new(size: usize, rules: Vec<Box<FuzzyRule<'a>>>) -> FuzzyParser<'a> {
         FuzzyParser {
             rules: rules,
             size: size,
@@ -211,47 +268,47 @@ impl<'a> Preprocessing<'a> for CPreprocessing {
         }
     }
 }
-
-struct Fnn;
-
-impl<'a> FuzzyCallback<'a> for Fnn {
-    fn on_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> Vec<(Tagged, Span)> {
-        let mut kw = String::new();
-        let mut name = String::new();
-
-        match tokens[0].0 {
-            &Token::Fn => { kw = "fn".to_string(); },
-            _ => {},
-        }
-
-        match tokens[1].0 {
-            &Token::Ident(ref n) => { name = n.clone(); },
-            _ => {},
-        }
-
-        vec![
-            (Tagged::Keyword(kw), tokens[0].1.clone()),
-            (Tagged::Definition(name), tokens[1].1.clone()),
-        ]
-    }
-}
-
-struct CallFn;
-
-impl<'a> FuzzyCallback<'a> for CallFn {
-    fn on_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> Vec<(Tagged, Span)> {
-        let mut name = String::new();
-
-        match tokens[0].0 {
-            &Token::Ident(ref n) => { name = n.clone(); },
-            _ => {},
-        }
-
-        vec![
-            (Tagged::Calling(name), tokens[0].1.clone()),
-        ]
-    }
-}
+//
+// struct Fnn;
+//
+// impl<'a> FuzzyCallback<'a> for Fnn {
+//     fn on_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> Vec<(Tagged, Span)> {
+//         let mut kw = String::new();
+//         let mut name = String::new();
+//
+//         match tokens[0].0 {
+//             &Token::Fn => { kw = "fn".to_string(); },
+//             _ => {},
+//         }
+//
+//         match tokens[1].0 {
+//             &Token::Ident(ref n) => { name = n.clone(); },
+//             _ => {},
+//         }
+//
+//         vec![
+//             (Tagged::Keyword(kw), tokens[0].1.clone()),
+//             (Tagged::Definition(name), tokens[1].1.clone()),
+//         ]
+//     }
+// }
+//
+// struct CallFn;
+//
+// impl<'a> FuzzyCallback<'a> for CallFn {
+//     fn on_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> Vec<(Tagged, Span)> {
+//         let mut name = String::new();
+//
+//         match tokens[0].0 {
+//             &Token::Ident(ref n) => { name = n.clone(); },
+//             _ => {},
+//         }
+//
+//         vec![
+//             (Tagged::Calling(name), tokens[0].1.clone()),
+//         ]
+//     }
+// }
 
 impl CommonParser {
     pub fn new(buffer: String) -> CommonParser {
@@ -281,15 +338,16 @@ impl CommonParser {
         let callback = |tokens: &Vec<(&Token, &Span)>| -> Vec<(Tagged, Span)> {
             vec![]
         };
-        let fn_rule = FuzzyTokenRule::new(vec![Fn, Ident(String::new()), LParen], Box::new(Fnn{}));
-        let call_fn_rule = FuzzyTokenRule::new(vec![Ident(String::new()), LParen], Box::new(CallFn{}));
+        //let fn_rule = FuzzyTokenRule::new(vec![Fn, Ident(String::new()), LParen], Box::new(Fnn{}));
+        //let call_fn_rule = FuzzyTokenRule::new(vec![Ident(String::new()), LParen], Box::new(CallFn{}));
         let kw_rule = Box::new(KwMatch::new());
+        let fn_rule = Box::new(FnMatch{});
         //
-        let mut parser = FuzzyParser::new(vec![Box::new(fn_rule), Box::new(call_fn_rule)]);
-        let mut syntax_parser = FuzzyParser::new(vec![kw_rule]);
+        let mut parser = FuzzyParser::new(3, vec![fn_rule]);
+        let mut syntax_parser = FuzzyParser::new(1, vec![kw_rule]);
 
         let mut syntax_parser_out = vec![];
-        //let mut parser_out = vec![];
+        let mut parser_out = vec![];
 
         for &(ref tok, ref span) in &self.lexems {
             let (a, b) = (tok, span);
@@ -300,7 +358,11 @@ impl CommonParser {
             }
 
             if let Some((wtok, wspan)) = preproc.filter((tok, span)) {
-                //parser.push((wtok, wspan));
+                let pres = parser.push((wtok, wspan));
+                if pres.len() != 0 {
+                    //println!("PR: {:?}", res);
+                    parser_out.extend(pres);
+                }
             }
             // if let Some((wtok, wspan)) = preproc.filter((tok, span)) {
             //     parser.push((wtok, wspan));
@@ -312,6 +374,7 @@ impl CommonParser {
         }
 
         println!("SYN: {:?}", syntax_parser_out);
+        println!("PRS: {:?}", parser_out);
 
         return Context::new(syntax_parser_out);
     }

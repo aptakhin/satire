@@ -12,6 +12,7 @@ pub enum WhitespaceType {
 
 #[derive(Debug, Clone)]
 pub enum Token {
+    NoToken,
     Ident(String),
 
     Use,
