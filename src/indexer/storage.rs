@@ -51,12 +51,14 @@ impl fmt::Debug for FileSource {
 
 pub struct Context {
     pub syntax: Vec<(Tagged, Span)>,
+    pub parsed: Vec<(Tagged, Span)>,
 }
 
 impl Context {
-    pub fn new(syntax: Vec<(Tagged, Span)>) -> Context {
+    pub fn new(syntax: Vec<(Tagged, Span)>, parsed: Vec<(Tagged, Span)>) -> Context {
         Context {
             syntax: syntax,
+            parsed: parsed,
         }
     }
 

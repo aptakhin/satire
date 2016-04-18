@@ -1,7 +1,4 @@
 
-use std::io::Read;
-//use std::io::prelude::*;
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum WhitespaceType {
     Newline(usize),
