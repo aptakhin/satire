@@ -297,47 +297,6 @@ impl<'a> Preprocessing<'a> for CPreprocessing {
         }
     }
 }
-//
-// struct Fnn;
-//
-// impl<'a> FuzzyCallback<'a> for Fnn {
-//     fn on_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> Vec<(Tagged, Span)> {
-//         let mut kw = String::new();
-//         let mut name = String::new();
-//
-//         match tokens[0].0 {
-//             &Token::Fn => { kw = "fn".to_string(); },
-//             _ => {},
-//         }
-//
-//         match tokens[1].0 {
-//             &Token::Ident(ref n) => { name = n.clone(); },
-//             _ => {},
-//         }
-//
-//         vec![
-//             (Tagged::Keyword(kw), tokens[0].1.clone()),
-//             (Tagged::Definition(name), tokens[1].1.clone()),
-//         ]
-//     }
-// }
-//
-// struct CallFn;
-//
-// impl<'a> FuzzyCallback<'a> for CallFn {
-//     fn on_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> Vec<(Tagged, Span)> {
-//         let mut name = String::new();
-//
-//         match tokens[0].0 {
-//             &Token::Ident(ref n) => { name = n.clone(); },
-//             _ => {},
-//         }
-//
-//         vec![
-//             (Tagged::Calling(name), tokens[0].1.clone()),
-//         ]
-//     }
-// }
 
 impl CommonParser {
     pub fn new(buffer: String) -> CommonParser {
@@ -393,13 +352,6 @@ impl CommonParser {
                     parser_out.extend(pres);
                 }
             }
-            // if let Some((wtok, wspan)) = preproc.filter((tok, span)) {
-            //     parser.push((wtok, wspan));
-            //     //if res.len() != 0 {
-            //     //    println!("PR: {:?}", res);
-            //         //parser_out.extend(res);
-            //     //}
-            // }
         }
 
         println!("SYN: {:?}", syntax_parser_out);
