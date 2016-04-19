@@ -19,8 +19,9 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
     let mut till = 0;
     for &(ref tagged, ref span, ref info) in items {
         out.push_str(&content[till..span.lo]);
-        let fmt;
+
         let cnt = &content[span.lo..span.hi];
+        let fmt;
 
         match tagged {
             &Tagged::Keyword(ref kw) => {
@@ -28,6 +29,17 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
             },
             &Tagged::Comment => {
                 fmt = format!("<span style='color: green;'>{}</span>", &cnt)
+            },
+            &Tagged::Calling(ref name) => {
+                println!("TT");
+                match info {
+                    &Some(ref add_info) => {
+                        //let infff: &Info = &add_info;
+                        println!("XX");
+                        fmt = add_info.dst.render_html(name);
+                    },
+                    _ => { fmt = cnt.to_string() },
+                }
             },
             &Tagged::Whitespace(ref wh) => {
                 match wh {

@@ -1,4 +1,6 @@
 
+use std::usize::MAX;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum WhitespaceType {
     Newline(usize),
@@ -60,11 +62,12 @@ lexer! {
 pub struct CommonLexer<'a> {
     original: &'a str,
     remaining: &'a str,
+    line_counter: usize,
 }
 
 impl<'a> CommonLexer<'a> {
     pub fn new(s: &'a str) -> CommonLexer<'a> {
-        CommonLexer { original: s, remaining: s }
+        CommonLexer { original: s, remaining: s, line_counter: 0 }
     }
 }
 
@@ -72,24 +75,57 @@ impl<'a> CommonLexer<'a> {
 pub struct Span {
     pub lo: usize,
     pub hi: usize,
+    pub line: usize,
 }
 
-fn span_in(s: &str, t: &str) -> Span {
+fn span_in(s: &str, t: &str, line: usize) -> Span {
     let lo = s.as_ptr() as usize - t.as_ptr() as usize;
     Span {
         lo: lo,
         hi: lo + s.len(),
+        line: line,
+    }
+}
+
+impl Span {
+    pub fn end() -> Span {
+        Span {
+            lo: usize::max_value(),
+            hi: usize::max_value(),
+            line: usize::max_value(),
+        }
     }
 }
 
 impl<'a> Iterator for CommonLexer<'a> {
     type Item = (Token, Span);
     fn next(&mut self) -> Option<(Token, Span)> {
+        if self.line_counter == 0 {
+            self.line_counter = 1;
+            let item = Some((
+                Token::Whitespace(WhitespaceType::Newline(self.line_counter)),
+                Span {
+                    lo: 0,
+                    hi: 0,
+                    line: self.line_counter,
+                }
+            ));
+            self.line_counter += 1;
+            return item
+        }
+
         loop {
             if let Some((tok, span)) = next_token(&mut self.remaining) {
-                return Some((tok, span_in(span, self.original)));
+                return Some((tok, span_in(span, self.original, self.line_counter)));
             } else {
-                return Some((Token::Eof, Span{lo: self.original.len(), hi: self.original.len()}))
+                return Some((
+                    Token::Eof,
+                    Span {
+                        lo: self.original.len(),
+                        hi: self.original.len(),
+                        line: self.line_counter,
+                    }
+                ))
             };
         }
     }

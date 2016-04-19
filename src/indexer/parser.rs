@@ -24,6 +24,7 @@ pub enum Tagged {
     Whitespace(WhitespaceType),
     Comment,
     Keyword(Token),
+    Eof,
 }
 
 #[derive(Debug)]
@@ -311,7 +312,7 @@ impl CommonParser {
 
         let mut lexer = CommonLexer::new(&self.buffer);
 
-        self.lexems.push((Token::Whitespace(WhitespaceType::Newline(0)), Span{lo: 0, hi: 0}));
+        //self.lexems.push((Token::Whitespace(WhitespaceType::Newline(0)), Span{lo: 0, hi: 0}));
 
         for (tok, span) in lexer {
             //println!("L: {:?} {:?}", tok, span);
