@@ -28,7 +28,7 @@ impl SourceFile {
 #[derive(Clone)]
 pub struct FileSource {
     pub file: String,
-    pub line: i32,
+    pub line: usize,
 }
 
 impl FileSource {
@@ -68,7 +68,7 @@ impl Context {
     pub fn find(&self, path: &str) -> Option<(&Tagged, &Span)> {
         let mut found = None;
         for &(ref tagged, ref span) in &self.parsed {
-            println!("  l: {:?}", tagged);
+            //println!("  l: {:?}", tagged);
             match tagged {
                 &Tagged::Definition(ref name) if name == path => {
                     found = Some((tagged, span));
@@ -85,17 +85,17 @@ impl Context {
 
         for &(ref tagged, ref span) in &self.parsed {
             let mut info = None;
-            println!("QQQ: {:?} {:?}", tagged, span);
+            //println!("QQQ: {:?} {:?}", tagged, span);
 
             match tagged {
                 &Tagged::Calling(ref name) => {
                     if let Some((ftagged, fspan)) = self.find(&name) {
-                        println!("  c: {:?} {:?}", tagged, span);
-                        println!("  f: {:?} {:?}", ftagged, fspan);
+                        //println!("  c: {:?} {:?}", tagged, span);
+                        //println!("  f: {:?} {:?}", ftagged, fspan);
 
                         let file_source = FileSource {
                             file: "a.rs".to_string(),
-                            line: 3,
+                            line: fspan.line,
                         };
                         info = Some(Box::new(Info{
                             dst: file_source,
@@ -106,10 +106,10 @@ impl Context {
             }
 
             pars.push((tagged.clone(), span.clone(), info));
-            println!("E: {}", pars.len());
+            //println!("E: {}", pars.len());
         }
         pars.push((Tagged::Eof, Span::end(), None));
-        println!("D: {}", pars.len());
+        //println!("D: {}", pars.len());
 
         let mut synt: Vec<(Tagged, Span, Option<Box<Info>>)> = vec![];
         for i in 0..self.syntax.len() {
@@ -124,12 +124,12 @@ impl Context {
         let mut b = 0;
 
         while a < pars.len() || b < synt.len() {
-            println!("s: {}/{} {}/{}", a, pars.len(), b, synt.len());
+            //println!("s: {}/{} {}/{}", a, pars.len(), b, synt.len());
             if a < pars.len() {
-                println!("  a: {}/{:?}", a, pars[a]);
+                //println!("  a: {}/{:?}", a, pars[a]);
             }
             if b < synt.len() {
-                println!("  b: {}/{:?}", b, synt[b]);
+                //println!("  b: {}/{:?}", b, synt[b]);
             }
             if a < pars.len() && b >= synt.len() || a < pars.len() && b < synt.len() && pars[a].1.lo <= synt[b].1.lo {
                 let push = pars[a].clone();

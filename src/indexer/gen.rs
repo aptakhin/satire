@@ -18,6 +18,7 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
 
     let mut till = 0;
     for &(ref tagged, ref span, ref info) in items {
+        //println!("A: {}, {}, {}", till, span.lo, span.hi);
         out.push_str(&content[till..span.lo]);
 
         let cnt = &content[span.lo..span.hi];
@@ -31,11 +32,11 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
                 fmt = format!("<span style='color: green;'>{}</span>", &cnt)
             },
             &Tagged::Calling(ref name) => {
-                println!("TT");
+                //println!("TT");
                 match info {
                     &Some(ref add_info) => {
                         //let infff: &Info = &add_info;
-                        println!("XX");
+                        //println!("XX");
                         fmt = add_info.dst.render_html(name);
                     },
                     _ => { fmt = cnt.to_string() },
