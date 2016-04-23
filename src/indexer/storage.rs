@@ -130,7 +130,7 @@ impl IndexBuilder {
 
         for i in 0..self.set.len() {
             let generated = deduced[i].gen();
-            gen::to_file(self.set[i].file.clone(), &self.set[i].content, &generated[..]);
+            gen::to_file(format!("{}.html", self.set[i].file), &self.set[i].content, &generated[..]);
         }
     }
 
