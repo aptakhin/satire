@@ -8,6 +8,13 @@ use indexer::lexer::WhitespaceType;
 use indexer::storage::FileSource;
 use indexer::storage::Info;
 
+impl FileSource {
+    pub fn render_html(&self, name: &str) -> String {
+        let file = format!("{}.html", self.file);
+        format!("<a href=\"{}#l{}\">{}</a>", file, self.line, name)
+    }
+}
+
 pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) {
     let output = File::create(filename).unwrap();
     let mut writer = BufWriter::new(output);
@@ -37,7 +44,7 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
                     &Some(ref add_info) => {
                         //let infff: &Info = &add_info;
                         //println!("XX");
-                        fmt = add_info.dst.render_html(name);
+                        fmt = add_info.refs[0].render_html(name);
                     },
                     _ => { fmt = cnt.to_string() },
                 }

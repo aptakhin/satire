@@ -12,11 +12,6 @@ pub enum ParserState {
     NameThenCall,
 }
 
-pub struct CommonParser {
-    pub buffer: String,
-    pub lexems: Vec<(Token, Span)>,
-}
-
 #[derive(Debug, Clone)]
 pub enum Tagged {
     Definition(String),
@@ -105,7 +100,7 @@ impl<'a> FuzzyRule<'a> for KwMatch {
         //println!("Q: {:?}", tokens[0].0);
 
         match tokens[0].0 {
-            &Fn | &Use | &Struct | &Pub | &Let | &Impl => FuzzyRuleState::Ready(
+            &Fn | &Use | &Struct | &Pub | &Let | &Impl | &If | &Return => FuzzyRuleState::Ready(
                 1,
                 vec![(Tagged::Keyword(tokens[0].0.clone()), tokens[0].1.clone())],
             ),
@@ -306,9 +301,16 @@ impl<'a> Preprocessing<'a> for CPreprocessing {
     }
 }
 
+pub struct CommonParser {
+    pub file: String,
+    pub buffer: String,
+    pub lexems: Vec<(Token, Span)>,
+}
+
 impl CommonParser {
-    pub fn new(buffer: String) -> CommonParser {
+    pub fn new(file: String, buffer: String) -> CommonParser {
         CommonParser {
+            file: file,
             buffer: buffer,
             lexems: vec![],
         }
@@ -376,6 +378,6 @@ impl CommonParser {
         println!("SYN: {:?}", syntax_parser_out);
         println!("PRS: {:?}", parser_out);
 
-        return Context::new(syntax_parser_out, parser_out);
+        return Context::new(self.file.clone(), syntax_parser_out, parser_out);
     }
 }

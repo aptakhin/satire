@@ -1,7 +1,9 @@
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::fs::File;
 use std::fmt;
+use std::io;
+use std::fs::{self, DirEntry, File};
+use std::path::Path;
 
 use indexer::parser::Tagged;
 use indexer::lexer::Span;
@@ -31,15 +33,9 @@ pub struct FileSource {
     pub line: usize,
 }
 
-impl FileSource {
-    pub fn render_html(&self, name: &str) -> String {
-        format!("<a href=\"#l{}\">{}</a>", self.line, name)
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Info {
-    pub dst: FileSource,
+    pub refs: Vec<FileSource>,
 }
 
 impl fmt::Debug for FileSource {
@@ -48,16 +44,88 @@ impl fmt::Debug for FileSource {
     }
 }
 
+pub struct Index<'a> {
+    pub set: Vec<&'a mut Context>,
+}
+
+impl<'a> Index<'a> {
+    pub fn new() -> Index<'a> {
+        Index {
+            set: vec![],
+        }
+    }
+
+    pub fn add(&mut self, ctx: &'a mut Context) {
+        self.set.push(ctx);
+    }
+
+    pub fn find(&self, path: &str) -> Vec<FileSource> {
+        let mut found = vec![];
+
+        for ctx in &self.set {
+            found.append(&mut ctx.find(path));
+        }
+
+        found
+    }
+
+    // pub fn build(&mut self) -> Index {
+    //     Index {
+    //         set: self.set,
+    //     }
+    // }
+}
+
+struct IndexBuilder<'a> {
+    pub index: Index<'a>,
+}
+
+impl<'a> IndexBuilder<'a> {
+    pub fn new() -> IndexBuilder<'a> {
+        IndexBuilder {
+            index: Index::new(),
+        }
+    }
+
+    pub fn build_dir(&mut self, root_dir: &str) -> io::Result<()> {
+        self.add_dir_rec(root_dir)
+    }
+
+    pub fn add_dir_rec(&mut self, dir: &str) -> io::Result<()> {
+        if try!(fs::metadata(dir)).is_dir() {
+            for entry in try!(fs::read_dir(dir)) {
+                let entry = try!(entry);
+                if try!(fs::metadata(entry.path())).is_dir() {
+                    try!(self.add_dir_rec(&entry.path().to_str().unwrap()));
+                } else {
+                    try!(self.add_file(&entry.path().to_str().unwrap()));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn add_file(&mut self, filepath: &str) -> io::Result<()> {
+        Ok(())
+    }
+}
+
 pub struct Context {
+    pub file: String,
     pub syntax: Vec<(Tagged, Span)>,
     pub parsed: Vec<(Tagged, Span)>,
+    pub synt: Vec<(Tagged, Span, Option<Box<Info>>)>,
+    pub pars: Vec<(Tagged, Span, Option<Box<Info>>)>,
 }
 
 impl Context {
-    pub fn new(syntax: Vec<(Tagged, Span)>, parsed: Vec<(Tagged, Span)>) -> Context {
+    pub fn new(file: String, syntax: Vec<(Tagged, Span)>, parsed: Vec<(Tagged, Span)>) -> Context {
         Context {
+            file: file,
             syntax: syntax,
             parsed: parsed,
+            synt: vec![],
+            pars: vec![],
         }
     }
 
@@ -65,14 +133,16 @@ impl Context {
         //self.all_tagged.append(&mut ctx.all_tagged);
     }
 
-    pub fn find(&self, path: &str) -> Option<(&Tagged, &Span)> {
-        let mut found = None;
+    pub fn find(&self, path: &str) -> Vec<FileSource> {
+        let mut found = vec![];
         for &(ref tagged, ref span) in &self.parsed {
             //println!("  l: {:?}", tagged);
             match tagged {
                 &Tagged::Definition(ref name) if name == path => {
-                    found = Some((tagged, span));
-                    break;
+                    found.push(FileSource{
+                        file: self.file.clone(),
+                        line: span.line,
+                    })
                 },
                 _ => {},
             }
@@ -80,48 +150,54 @@ impl Context {
         found
     }
 
-    pub fn gen(&self) -> Vec<(Tagged, Span, Option<Box<Info>>)> {
-        let mut pars: Vec<(Tagged, Span, Option<Box<Info>>)> = vec![];
+    pub fn find_with_index(&self, path: &str, index: &Index) -> Vec<FileSource> {
+        let mut found = index.find(path);
+        found.append(&mut self.find(path));
+        found
+    }
 
+    pub fn deduce(&mut self, index: &Index) {
         for &(ref tagged, ref span) in &self.parsed {
             let mut info = None;
             //println!("QQQ: {:?} {:?}", tagged, span);
 
             match tagged {
                 &Tagged::Calling(ref name) => {
-                    if let Some((ftagged, fspan)) = self.find(&name) {
+                    let refs = self.find_with_index(&name, index);
+                    if refs.len() > 0 {
                         //println!("  c: {:?} {:?}", tagged, span);
                         //println!("  f: {:?} {:?}", ftagged, fspan);
 
-                        let file_source = FileSource {
-                            file: "a.rs".to_string(),
-                            line: fspan.line,
-                        };
                         info = Some(Box::new(Info{
-                            dst: file_source,
+                            refs: refs,
                         }));
                     }
                 },
                 _ => {},
             }
 
-            pars.push((tagged.clone(), span.clone(), info));
+            self.pars.push((tagged.clone(), span.clone(), info));
             //println!("E: {}", pars.len());
         }
-        pars.push((Tagged::Eof, Span::end(), None));
-        //println!("D: {}", pars.len());
+        self.pars.push((Tagged::Eof, Span::end(), None));
 
         let mut synt: Vec<(Tagged, Span, Option<Box<Info>>)> = vec![];
         for i in 0..self.syntax.len() {
             let &(ref tagged, ref span) = &self.syntax[i];
 
-            synt.push((tagged.clone(), span.clone(), None));
+            self.synt.push((tagged.clone(), span.clone(), None));
         }
-        synt.push((Tagged::Eof, Span::end(), None));
+        self.synt.push((Tagged::Eof, Span::end(), None));
+    }
 
+
+    pub fn gen(&self) -> Vec<(Tagged, Span, Option<Box<Info>>)> {
         let mut merged = vec![];
         let mut a = 0;
         let mut b = 0;
+
+        let ref pars = self.pars;
+        let ref synt = self.synt;
 
         while a < pars.len() || b < synt.len() {
             //println!("s: {}/{} {}/{}", a, pars.len(), b, synt.len());

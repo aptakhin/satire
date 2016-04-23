@@ -21,6 +21,8 @@ pub enum Token {
     Impl,
     Let,
     Mut,
+    If,
+    Return,
 
     LParen,
     RParen,
@@ -50,6 +52,8 @@ lexer! {
     r#"impl"# => (Token::Impl, text),
     r#"let"# => (Token::Let, text),
     r#"mut"# => (Token::Mut, text),
+    r#"if"# => (Token::If, text),
+    r#"return"# => (Token::Return, text),
 
     r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::Ident(text.to_owned()), text),
 
