@@ -3,7 +3,7 @@ use std::intrinsics::discriminant_value;
 use std::cmp::min;
 
 use indexer::lexer::{CommonLexer, Token, Span, WhitespaceType};
-use indexer::storage::Context;
+use indexer::storage::PreparsedFile;
 
 #[derive(Debug)]
 pub enum ParserState {
@@ -316,7 +316,7 @@ impl CommonParser {
         }
     }
 
-    pub fn parse(&mut self) -> Context {
+    pub fn parse(&mut self) -> PreparsedFile {
         use indexer::lexer::Token::*;
 
         let mut lexer = CommonLexer::new(&self.buffer);
@@ -378,6 +378,6 @@ impl CommonParser {
         println!("SYN: {:?}", syntax_parser_out);
         println!("PRS: {:?}", parser_out);
 
-        return Context::new(self.file.clone(), syntax_parser_out, parser_out);
+        PreparsedFile::new(self.file.clone(), syntax_parser_out, parser_out)
     }
 }

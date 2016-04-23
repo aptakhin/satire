@@ -5,8 +5,7 @@ use std::fs::File;
 use indexer::parser::Tagged;
 use indexer::lexer::Span;
 use indexer::lexer::WhitespaceType;
-use indexer::storage::FileSource;
-use indexer::storage::Info;
+use indexer::storage::{FileSource, Info, IndexBuilder, ParsedFile};
 
 impl FileSource {
     pub fn render_html(&self, name: &str) -> String {
@@ -14,6 +13,17 @@ impl FileSource {
         format!("<a href=\"{}#l{}\">{}</a>", file, self.line, name)
     }
 }
+
+// pub fn generate(index: &IndexBuilder, root_dir: &str) {
+//     for parsed_file in &index.set {
+//         let gen = parsed_file.ctx.gen();
+//         to_file(
+//             format!("{}.html", parsed_file.file),
+//             &parsed_file.content,
+//             &gen,
+//         )
+//     }
+// }
 
 pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) {
     let output = File::create(filename).unwrap();
