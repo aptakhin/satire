@@ -6,4 +6,3 @@ authors = [ "Alexander Ptakhin <me@aptakhin.name>" ]
 
 [dependencies]
 plex = "0.0.1"
-enum_primitive = "*"

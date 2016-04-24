@@ -4,7 +4,7 @@ use std::fmt;
 use std::io;
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
-
+use std::io::BufWriter;
 
 use indexer::parser::{Tagged, CommonParser};
 use indexer::lexer::Span;
@@ -130,7 +130,24 @@ impl IndexBuilder {
 
         for i in 0..self.set.len() {
             let generated = deduced[i].gen();
-            gen::to_file(format!("{}.html", self.set[i].file), &self.set[i].content, &generated[..]);
+
+            //let template = mustache::compile_path("web/code_template.html").unwrap();
+            let mut template_file = File::open("web/code_template.html").unwrap();
+            let mut template = String::new();
+            template_file.read_to_string(&mut template);
+
+            let code = gen::to_string(&self.set[i].content, &generated[..]);
+            template = template.replace("{{code}}", &code);
+
+            let output = File::create(format!("web/{}.html", self.set[i].file)).unwrap();
+            let mut writer = BufWriter::new(output);
+            //let out = to_string(content, items);
+            //writer.write(out.as_bytes()).unwrap();
+
+            //template.render_data(&mut writer, &template);
+            writer.write(template.as_bytes()).unwrap();
+
+            //gen::to_file(format!("{}.html", self.set[i].file), &self.set[i].content, &generated[..]);
         }
     }
 

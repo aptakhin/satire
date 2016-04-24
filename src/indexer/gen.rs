@@ -9,7 +9,7 @@ use indexer::storage::{FileSource, Info, IndexBuilder, ParsedFile};
 
 impl FileSource {
     pub fn render_html(&self, name: &str) -> String {
-        let file = format!("{}.html", self.file);
+        let file = format!("test/{}.html", self.file);
         format!("<a href=\"/{}#l{}\">{}</a>", file, self.line, name)
     }
 }
@@ -25,13 +25,8 @@ impl FileSource {
 //     }
 // }
 
-pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) {
-    let output = File::create(filename).unwrap();
-    let mut writer = BufWriter::new(output);
-
-    //println!("---------------------------");
+pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> String {
     let mut out = String::new();
-    out.push_str("<pre>");
 
     let mut till = 0;
     for &(ref tagged, ref span, ref info) in items {
@@ -66,9 +61,9 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
                 match wh {
                     &WhitespaceType::Newline(line_counter) => {
                         if line_counter == 1 {
-                            fmt = format!("<a name=\"l{}\">", line_counter);
+                            fmt = format!("<a name=\"l{}\"></a>", line_counter);
                         } else {
-                            fmt = format!("\n<a name=\"l{}\">", line_counter);
+                            fmt = format!("\n<a name=\"l{}\"></a>", line_counter);
                         }
                     },
                     _ => { fmt = cnt.to_string() },
@@ -86,6 +81,12 @@ pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<B
         out.push_str(&content[till..]);
     }
 
-    out.push_str("</pre>");
+    out
+}
+
+pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) {
+    let output = File::create(filename).unwrap();
+    let mut writer = BufWriter::new(output);
+    let out = to_string(content, items);
     writer.write(out.as_bytes()).unwrap();
 }
