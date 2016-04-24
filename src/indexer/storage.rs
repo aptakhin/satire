@@ -44,7 +44,7 @@ pub struct Info {
 
 impl fmt::Debug for FileSource {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.line)
+        write!(f, "{}:{}", self.file, self.line)
     }
 }
 
@@ -144,7 +144,7 @@ impl IndexBuilder {
             let mut tree = String::new();
 
             if let Some(parent) = filepath.parent() {
-                println!("FF: {}", parent.to_str().unwrap());
+                //println!("FF: {}", parent.to_str().unwrap());
                 tree.push_str("<ul>");
                 if let Some(value) = self.dir_files.get(parent.to_str().unwrap()) {
                     for i in value {
@@ -164,6 +164,9 @@ impl IndexBuilder {
             let title = format!("{}", self.set[i].file);
             template = template.replace("{{title}}", &title);
 
+            let dir = format!("web/{}", Path::new(&self.set[i].file).parent().unwrap().to_str().unwrap());
+            //println!("Create dir: {}", dir);
+            let res = fs::create_dir_all(dir);
             let output = File::create(format!("web/{}.html", self.set[i].file)).unwrap();
             let mut writer = BufWriter::new(output);
             //let out = to_string(content, items);
@@ -191,7 +194,7 @@ impl IndexBuilder {
         }
 
         let add_dir = &dir[..dir.len() - 1];
-        println!("AA: {}", add_dir);
+        //println!("AA: {}", add_dir);
         self.dir_files.insert(add_dir.to_string(), files);
 
         Ok(())
@@ -199,7 +202,7 @@ impl IndexBuilder {
 
     pub fn add_file(&mut self, filepath: &PathBuf, root_dir: &str) -> io::Result<()> {
         let file = filepath.to_str().unwrap();
-        println!("F: {}", file);
+        //println!("F: {}", file);
 
         let mut handle = true;
 
@@ -259,8 +262,6 @@ impl DeducedFile {
         let ref pars = self.pars;
         let ref synt = self.synt;
 
-        println!("T: {:?}, {:?}", pars, synt);
-
         while a < pars.len() || b < synt.len() {
             //println!("s: {}/{} {}/{}", a, pars.len(), b, synt.len());
             if a < pars.len() {
@@ -285,7 +286,7 @@ impl DeducedFile {
                 b += 1;
             }
         }
-        println!("M: {:?}/{}", merged, merged.len());
+        //println!("M: {:?}/{}", merged, merged.len());
 
         merged
     }
@@ -318,6 +319,7 @@ impl PreparsedFile {
             //println!("  l: {:?}", tagged);
             match tagged {
                 &Tagged::Definition(ref name) if name == path => {
+                    //println!("  DD: {:?}", tagged);
                     found.push(FileSource{
                         file: self.file.clone(),
                         line: span.line,
@@ -326,12 +328,6 @@ impl PreparsedFile {
                 _ => {},
             }
         }
-        found
-    }
-
-    pub fn find_with_index(&self, path: &str, index: &Index) -> Vec<FileSource> {
-        let mut found = index.find(path);
-        found.append(&mut self.find(path));
         found
     }
 
@@ -345,7 +341,7 @@ impl PreparsedFile {
 
             match tagged {
                 &Tagged::Calling(ref name) => {
-                    let refs = self.find_with_index(&name, index);
+                    let refs = index.find(&name);
                     if refs.len() > 0 {
                         //println!("  c: {:?} {:?}", tagged, span);
                         //println!("  f: {:?} {:?}", ftagged, fspan);

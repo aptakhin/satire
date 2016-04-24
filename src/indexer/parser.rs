@@ -100,7 +100,13 @@ impl<'a> FuzzyRule<'a> for KwMatch {
         //println!("Q: {:?}", tokens[0].0);
 
         match tokens[0].0 {
-            &Fn | &Use | &Struct | &Pub | &Let | &Impl | &If | &Return => FuzzyRuleState::Ready(
+            &As | &Break | &Crate | &Else | &Enum | &Extern | &False | &Fn | &For | &If |
+            &Impl | &In | &Let | &Loop | &Match | &Mod | &Move | &Mut | &Pub | &Ref |
+            &Return | &Static | &SelfValue | &SelfType | &Struct | &Super | &True |
+            &Trait | &Type | &Unsafe | &Use | &Virtual | &While | &Continue | &BoxT |
+            &Const | &Where | &Proc | &Alignof | &Become | &Offsetof | &Priv | &Pure |
+            &Sizeof | &Typeof | &Unsized | &Yield | &Do | &Abstract | &Final | &Override |
+            &Macro => FuzzyRuleState::Ready(
                 1,
                 vec![(Tagged::Keyword(tokens[0].0.clone()), tokens[0].1.clone())],
             ),
@@ -375,8 +381,8 @@ impl CommonParser {
             }
         }
 
-        println!("SYN: {:?}", syntax_parser_out);
-        println!("PRS: {:?}", parser_out);
+        //println!("SYN: {:?}", syntax_parser_out);
+        //println!("PRS: {:?}", parser_out);
 
         PreparsedFile::new(self.file.clone(), syntax_parser_out, parser_out)
     }
