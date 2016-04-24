@@ -102,7 +102,7 @@ impl<'a> FuzzyRule<'a> for KwMatch {
         match tokens[0].0 {
             &As | &Break | &Crate | &Else | &Enum | &Extern | &False | &Fn | &For | &If |
             &Impl | &In | &Let | &Loop | &Match | &Mod | &Move | &Mut | &Pub | &Ref |
-            &Return | &Static | &SelfValue | &SelfType | &Struct | &Super | &True |
+            &Return | &Static | &SelfType | &Struct | &Super | &True |
             &Trait | &Type | &Unsafe | &Use | &Virtual | &While | &Continue | &BoxT |
             &Const | &Where | &Proc | &Alignof | &Become | &Offsetof | &Priv | &Pure |
             &Sizeof | &Typeof | &Unsized | &Yield | &Do | &Abstract | &Final | &Override |

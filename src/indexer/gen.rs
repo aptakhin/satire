@@ -48,7 +48,8 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
                     &Some(ref add_info) => {
                         let refs = add_info.refs.iter().enumerate().fold(String::new(), |res, (_, i)| {
                             let file = format!("test/{}.html", i.file);
-                            res + &format!("<li><a href='/{}#l{}'>{}: {} <code>reference here</code></a></li>", file, i.line, file, i.line)
+                            res + &format!("<li><a href='/{}#l{}' target='_blank'>{}: {}
+                            </a></li>", file, i.line, file, i.line)
                         });
                         fmt = format!("<a tabindex='0' role='button' data-container='body' data-trigger='focus' data-toggle='popover' data-placement='bottom' data-content=\"<ul>{}</ul>\">{}</a>", refs, name);
                     },
