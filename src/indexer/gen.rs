@@ -10,7 +10,7 @@ use indexer::storage::{FileSource, Info, IndexBuilder, ParsedFile};
 impl FileSource {
     pub fn render_html(&self, name: &str) -> String {
         let file = format!("test/{}.html", self.file);
-        format!("<a href=\"/{}#l{}\">{}</a>", file, self.line, name)
+        format!("<a href='/{}#l{}'>{}</a>", file, self.line, name)
     }
 }
 
@@ -44,15 +44,12 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
                 fmt = format!("<span style='color: green;'>{}</span>", &cnt)
             },
             &Tagged::Calling(ref name) => {
-                //println!("TT");
                 match info {
                     &Some(ref add_info) => {
-                        //let infff: &Info = &add_info;
-                        //println!("XX");
                         let refs = add_info.refs.iter().enumerate().fold(String::new(), |res, (count, i)| {
                             res + &i.render_html(&format!("[{}]", count))
                         });
-                        fmt = format!("{}{}", name, refs);
+                        fmt = format!("<a href='#' data-container='body' data-trigger='focus' data-toggle='popover' data-placement='bottom' data-content=\"{}\">{}</a>", refs, name);
                     },
                     _ => { fmt = cnt.to_string() },
                 }

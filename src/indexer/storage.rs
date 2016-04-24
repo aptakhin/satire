@@ -6,6 +6,8 @@ use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
 use std::io::BufWriter;
 
+use std::collections::HashMap;
+
 use indexer::parser::{Tagged, CommonParser};
 use indexer::lexer::Span;
 use indexer::gen;
@@ -88,12 +90,14 @@ pub struct ParsedFile {
 pub struct IndexBuilder {
     //pub index: Index<'a>,
     pub set: Vec<ParsedFile>,
+    pub dir_files: HashMap<String, Vec<PathBuf>>,
 }
 
 impl IndexBuilder {
     pub fn new() -> IndexBuilder {
         IndexBuilder {
-            set: vec![]
+            set: vec![],
+            dir_files: HashMap::new(),
         }
     }
 
@@ -136,8 +140,29 @@ impl IndexBuilder {
             let mut template = String::new();
             template_file.read_to_string(&mut template);
 
+            let filepath = Path::new(&self.set[i].file);
+            let mut tree = String::new();
+
+            if let Some(parent) = filepath.parent() {
+                println!("FF: {}", parent.to_str().unwrap());
+                tree.push_str("<ul>");
+                if let Some(value) = self.dir_files.get(parent.to_str().unwrap()) {
+                    for i in value {
+                        //tree.push_str(i.to_str().unwrap());
+                        let path = i.to_str().unwrap();
+                        tree.push_str(&format!("<li><a href=\"/{}.html\">{}</a></li>", path, path));
+                    }
+                }
+                tree.push_str("</ul>");
+            }
+
+            template = template.replace("{{tree}}", &tree);
+
             let code = gen::to_string(&self.set[i].content, &generated[..]);
             template = template.replace("{{code}}", &code);
+
+            let title = format!("{}", self.set[i].file);
+            template = template.replace("{{title}}", &title);
 
             let output = File::create(format!("web/{}.html", self.set[i].file)).unwrap();
             let mut writer = BufWriter::new(output);
@@ -152,16 +177,23 @@ impl IndexBuilder {
     }
 
     pub fn add_dir_rec(&mut self, dir: &str, root_dir: &str) -> io::Result<()> {
+        let mut files = vec![];
         if try!(fs::metadata(dir)).is_dir() {
             for entry in try!(fs::read_dir(dir)) {
                 let entry = try!(entry);
                 if try!(fs::metadata(entry.path())).is_dir() {
                     try!(self.add_dir_rec(&entry.path().to_str().unwrap(), root_dir));
                 } else {
+                    files.push(entry.path());
                     try!(self.add_file(&entry.path(), root_dir));
                 }
             }
         }
+
+        let add_dir = &dir[..dir.len() - 1];
+        println!("AA: {}", add_dir);
+        self.dir_files.insert(add_dir.to_string(), files);
+
         Ok(())
     }
 
@@ -187,7 +219,6 @@ impl IndexBuilder {
                 content: source.content.clone(),
                 preparsed: preparsed,
             });
-
         }
 
         Ok(())
