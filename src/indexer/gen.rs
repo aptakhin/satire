@@ -43,6 +43,9 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
             &Tagged::Comment => {
                 fmt = format!("<span style='color: green;'>{}</span>", &cnt)
             },
+            &Tagged::QuotedString => {
+                fmt = format!("<span style='color: green;'>{}</span>", &cnt)
+            },
             &Tagged::Calling(ref name) => {
                 match info {
                     &Some(ref add_info) => {

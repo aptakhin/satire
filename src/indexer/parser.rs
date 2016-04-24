@@ -18,6 +18,7 @@ pub enum Tagged {
     Calling(String),
     Whitespace(WhitespaceType),
     Comment,
+    QuotedString,
     Keyword(Token),
     Eof,
 }
@@ -113,6 +114,10 @@ impl<'a> FuzzyRule<'a> for KwMatch {
             &Comment => FuzzyRuleState::Ready(
                 1,
                 vec![(Tagged::Comment, tokens[0].1.clone())],
+            ),
+            &QuotedString => FuzzyRuleState::Ready(
+                1,
+                vec![(Tagged::QuotedString, tokens[0].1.clone())],
             ),
             &Whitespace(ref wh) => {
                 //println!("WH: {:?} {:?}", tokens[0].0, wh);

@@ -13,6 +13,7 @@ pub enum WhitespaceType {
 pub enum Token {
     NoToken,
     Ident(String),
+    QuotedString,
 
     As,
     Break,
@@ -86,6 +87,8 @@ lexer! {
     r#"/[*](~(.*[*]/.*))[*]/"# => (Token::Comment, text),
     // "C++-style" comments (// ...)
     r#"//[^\n]*"# => (Token::Comment, text),
+
+    r#"\"(?:[^"\\]|\\.)*\""# => (Token::QuotedString, text),
 
 
     r#"as"# => (Token::As, text),
