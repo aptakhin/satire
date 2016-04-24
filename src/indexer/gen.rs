@@ -46,10 +46,11 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
             &Tagged::Calling(ref name) => {
                 match info {
                     &Some(ref add_info) => {
-                        let refs = add_info.refs.iter().enumerate().fold(String::new(), |res, (count, i)| {
-                            res + &i.render_html(&format!("[{}]", count))
+                        let refs = add_info.refs.iter().enumerate().fold(String::new(), |res, (_, i)| {
+                            let file = format!("test/{}.html", i.file);
+                            res + &format!("<li><a href='/{}#l{}'>{}: {} <code>reference here</code></a></li>", file, i.line, file, i.line)
                         });
-                        fmt = format!("<a href='#' data-container='body' data-trigger='focus' data-toggle='popover' data-placement='bottom' data-content=\"{}\">{}</a>", refs, name);
+                        fmt = format!("<a href='#' data-container='body' data-trigger='focus' data-toggle='popover' data-placement='bottom' data-content=\"<ul>{}</ul>\">{}</a>", refs, name);
                     },
                     _ => { fmt = cnt.to_string() },
                 }
