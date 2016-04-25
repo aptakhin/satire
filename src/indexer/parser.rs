@@ -219,6 +219,62 @@ impl<'a> FuzzyRule<'a> for FnMatch {
         match res {
             FuzzyRuleState::NotMatches => {
                 //println!("J: {:?}", tokens);
+                let rr = vec![Struct, Ident(String::new()), LFigureParen];
+                let m = match_tokens(&rr, tokens);
+
+                //println!("S: {:?}", m);
+                match m {
+                    FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                        //println!("W: {:?}", tokens);
+
+                        let mut name = String::new();
+                        match tokens[1].0 {
+                            &Token::Ident(ref n) => { name = n.clone(); },
+                            _ => {},
+                        }
+
+                        res = FuzzyRuleState::Ready(
+                            rr.len(),
+                            vec![(Tagged::Definition(name), tokens[1].1.clone())],
+                        );
+                    },
+                    _ => { res = m },
+                }
+            }
+            _ => {},
+        }
+
+        match res {
+            FuzzyRuleState::NotMatches => {
+                //println!("J: {:?}", tokens);
+                let rr = vec![Ident(String::new()), LFigureParen];
+                let m = match_tokens(&rr, tokens);
+
+                //println!("S: {:?}", m);
+                match m {
+                    FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                        //println!("W: {:?}", tokens);
+
+                        let mut name = String::new();
+                        match tokens[0].0 {
+                            &Token::Ident(ref n) => { name = n.clone(); },
+                            _ => {},
+                        }
+
+                        res = FuzzyRuleState::Ready(
+                            rr.len(),
+                            vec![(Tagged::Calling(name), tokens[0].1.clone())],
+                        );
+                    },
+                    _ => { res = m },
+                }
+            }
+            _ => {},
+        }
+
+        match res {
+            FuzzyRuleState::NotMatches => {
+                //println!("J: {:?}", tokens);
                 let rr = vec![Ident(String::new()), LParen];
                 let m = match_tokens(&rr, tokens);
 

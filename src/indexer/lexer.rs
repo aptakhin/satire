@@ -70,6 +70,9 @@ pub enum Token {
     LParen,
     RParen,
 
+    LFigureParen,
+    RFigureParen,
+
     Whitespace(WhitespaceType),
     Comment,
 
@@ -147,6 +150,9 @@ lexer! {
 
     r#"\("# => (Token::LParen, text),
     r#"\)"# => (Token::RParen, text),
+
+    r#"{"# => (Token::LFigureParen, text),
+    r#"}"# => (Token::RFigureParen, text),
 
     r#"."# => (Token::Other, text),
 }
