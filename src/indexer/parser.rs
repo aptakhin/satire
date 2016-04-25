@@ -122,12 +122,12 @@ impl<'a> FuzzyRule<'a> for KwMatch {
             &Whitespace(ref wh) => {
                 //println!("WH: {:?} {:?}", tokens[0].0, wh);
                 match wh {
-                    &WhitespaceType::Newline(lc) => {
+                    &WhitespaceType::Newline => {
                         //println!("Rz: {:?}", wh);
                         let lc = tokens[0].1.line;
                         let state = FuzzyRuleState::Ready(
                             1,
-                            vec![(Tagged::Whitespace(WhitespaceType::Newline(lc)), tokens[0].1.clone())],
+                            vec![(Tagged::Whitespace(WhitespaceType::Newline), tokens[0].1.clone())],
                         );
                         state
                     },
@@ -390,20 +390,20 @@ impl CommonParser {
 
         //self.lexems.push((Token::Whitespace(WhitespaceType::Newline(0)), Span{lo: 0, hi: 0}));
 
-        let mut line_counter = 0;
+        //let mut line_counter = 0;
 
         for (tok, mut span) in lexer {
             //println!("L: {:?} {:?} {}", tok, span, line_counter);
             match tok {
                 Token::Eof => {
-                    span.line = line_counter;
+                    //span.line = line_counter;
                     self.lexems.push((tok, span));
                     break;
                 }
                 Token::Whitespace(ref e) => {
                     match e {
-                        &WhitespaceType::Newline(lc) => {
-                            line_counter += 1;
+                        &WhitespaceType::Newline => {
+                            //line_counter += 1;
                         },
                         _ => {},
                     }
@@ -411,7 +411,7 @@ impl CommonParser {
                 _ => {},
             }
 
-            span.line = line_counter;
+            //span.line = line_counter;
             self.lexems.push((tok, span));
         }
 

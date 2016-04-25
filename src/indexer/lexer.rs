@@ -3,7 +3,7 @@ use std::usize::MAX;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum WhitespaceType {
-    Newline(usize),
+    Newline,
     Spaces,
     //Tabs(i32),
     //Spaces(i32),
@@ -83,7 +83,7 @@ pub enum Token {
 lexer! {
     fn next_token(text: 'a) -> (Token, &'a str);
 
-    r#"[\n]"# => (Token::Whitespace(WhitespaceType::Newline(0)), text),
+    r#"[\n]"# => (Token::Whitespace(WhitespaceType::Newline), text),
     //r#"\r\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
     r#"[ \t]+"# => (Token::Whitespace(WhitespaceType::Spaces), text),
     // "C-style" comments (/* .. */) - can't contain "*/"
@@ -201,19 +201,24 @@ impl<'a> Iterator for CommonLexer<'a> {
         if self.line_counter == 0 {
             self.line_counter = 1;
             let item = Some((
-                Token::Whitespace(WhitespaceType::Newline(self.line_counter)),
+                Token::Whitespace(WhitespaceType::Newline),
                 Span {
                     lo: 0,
                     hi: 0,
                     line: self.line_counter,
                 }
             ));
-            self.line_counter += 1;
             return item
         }
 
         loop {
             if let Some((tok, span)) = next_token(&mut self.remaining) {
+                match &tok {
+                    &Token::Whitespace(WhitespaceType::Newline) => {
+                        self.line_counter += 1;
+                    },
+                    _ => {},
+                }
                 return Some((tok, span_in(span, self.original, self.line_counter)));
             } else {
                 return Some((

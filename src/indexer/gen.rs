@@ -61,11 +61,11 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
             },
             &Tagged::Whitespace(ref wh) => {
                 match wh {
-                    &WhitespaceType::Newline(line_counter) => {
-                        if line_counter == 1 {
-                            fmt = format!("<a name=\"l{}\"></a>", line_counter);
+                    &WhitespaceType::Newline => {
+                        if span.line == 1 {
+                            fmt = format!("<a name=\"l{}\"></a>", span.line);
                         } else {
-                            fmt = format!("\n<a name=\"l{}\"></a>", line_counter);
+                            fmt = format!("\n<a name=\"l{}\"></a>", span.line);
                         }
                     },
                     _ => { fmt = cnt.to_string() },
