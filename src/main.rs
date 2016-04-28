@@ -1,11 +1,9 @@
 extern crate satire;
 
-use satire::indexer::parser::CommonParser;
 use satire::indexer::storage::{SourceFile, Index, IndexBuilder};
 use satire::indexer::gen;
 
 fn main() {
-    let file = "test/src.rs".to_string();
     let root_dir = "test/";
 
     let mut index_builder = IndexBuilder::new();

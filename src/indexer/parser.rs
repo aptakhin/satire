@@ -120,11 +120,8 @@ impl<'a> FuzzyRule<'a> for KwMatch {
                 vec![(Tagged::QuotedString, tokens[0].1.clone())],
             ),
             &Whitespace(ref wh) => {
-                //println!("WH: {:?} {:?}", tokens[0].0, wh);
                 match wh {
                     &WhitespaceType::Newline => {
-                        //println!("Rz: {:?}", wh);
-                        let lc = tokens[0].1.line;
                         let state = FuzzyRuleState::Ready(
                             1,
                             vec![(Tagged::Whitespace(WhitespaceType::Newline), tokens[0].1.clone())],
@@ -132,7 +129,6 @@ impl<'a> FuzzyRule<'a> for KwMatch {
                         state
                     },
                     &WhitespaceType::Spaces => {
-                        //println!("Bz: {:?}", wh);
                         FuzzyRuleState::NotMatches
                     }
                 }
@@ -185,7 +181,7 @@ fn match3<'a>(tokens: &VecDeque<(&'a Token, &'a Span)>) -> (Token, Token, Token)
 struct FnMatch;
 
 fn merge_result(cur_res: FuzzyRuleState, prev_res: FuzzyRuleState) -> FuzzyRuleState {
-    let mut merged_res;
+    let merged_res;
     match (&cur_res, &prev_res) {
         (&FuzzyRuleState::Cont(cur_len), &FuzzyRuleState::Cont(prev_len)) if cur_len < prev_len => {
             merged_res = prev_res;

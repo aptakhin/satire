@@ -1,6 +1,4 @@
 
-use std::usize::MAX;
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum WhitespaceType {
     Newline,
