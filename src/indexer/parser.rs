@@ -1,6 +1,6 @@
 use std::collections::vec_deque::VecDeque;
 use std::intrinsics::discriminant_value;
-use std::cmp::min;
+use std::cmp::{min, max};
 
 use indexer::lexer::{CommonLexer, Token, Span, WhitespaceType};
 use indexer::storage::PreparsedFile;
@@ -184,120 +184,112 @@ fn match3<'a>(tokens: &VecDeque<(&'a Token, &'a Span)>) -> (Token, Token, Token)
 
 struct FnMatch;
 
+fn merge_result(cur_res: FuzzyRuleState, prev_res: FuzzyRuleState) -> FuzzyRuleState {
+    let mut merged_res;
+    match (&cur_res, &prev_res) {
+        (&FuzzyRuleState::Cont(cur_len), &FuzzyRuleState::Cont(prev_len)) if cur_len < prev_len => {
+            merged_res = prev_res;
+        },
+        (&FuzzyRuleState::NotMatches, _) => {
+            merged_res = prev_res;
+        }
+        _ => { merged_res = cur_res; },
+    }
+    merged_res
+}
+
 impl<'a> FuzzyRule<'a> for FnMatch {
     fn match_tokens(&mut self, tokens: &VecDeque<(&'a Token, &'a Span)>) -> FuzzyRuleState {
         use indexer::lexer::Token::*;
         //println!("Q: {:?}", tokens);
-        //Fn, Ident(String::new()), LParen
         let mut res = FuzzyRuleState::NotMatches;
 
         {
             let rr = vec![Fn, Ident(String::new()), LParen];
-            let m = match_tokens(&rr, tokens);
+            let mut cur_match = match_tokens(&rr, tokens);
 
-            match m {
+            match cur_match {
                 FuzzyRuleState::Cont(len) if tokens.len() >= len => {
-                    //println!("W: {:?} {:?} {} {}", tokens, rr, len, rr.len());
-
                     let mut name = String::new();
                     match tokens[1].0 {
                         &Token::Ident(ref n) => { name = n.clone(); },
                         _ => {},
                     }
 
-                    res = FuzzyRuleState::Ready(
+                    cur_match = FuzzyRuleState::Ready(
                         rr.len(),
                         vec![(Tagged::Definition(name), tokens[1].1.clone())],
                     );
-
-                    //println!("RR: {:?}", res);
                 },
-                _ => { res = m },
+                _ => {},
             }
+            res = merge_result(cur_match, res);
         }
 
-        match res {
-            FuzzyRuleState::NotMatches => {
-                //println!("J: {:?}", tokens);
-                let rr = vec![Struct, Ident(String::new()), LFigureParen];
-                let m = match_tokens(&rr, tokens);
+        {
+            let rr = vec![Struct, Ident(String::new()), LFigureParen];
+            let mut cur_match = match_tokens(&rr, tokens);
 
-                //println!("S: {:?}", m);
-                match m {
-                    FuzzyRuleState::Cont(len) if tokens.len() >= len => {
-                        //println!("W: {:?}", tokens);
+            match cur_match {
+                FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                    let mut name = String::new();
+                    match tokens[1].0 {
+                        &Token::Ident(ref n) => { name = n.clone(); },
+                        _ => {},
+                    }
 
-                        let mut name = String::new();
-                        match tokens[1].0 {
-                            &Token::Ident(ref n) => { name = n.clone(); },
-                            _ => {},
-                        }
-
-                        res = FuzzyRuleState::Ready(
-                            rr.len(),
-                            vec![(Tagged::Definition(name), tokens[1].1.clone())],
-                        );
-                    },
-                    _ => { res = m },
-                }
+                    cur_match = FuzzyRuleState::Ready(
+                        rr.len(),
+                        vec![(Tagged::Definition(name), tokens[1].1.clone())],
+                    );
+                },
+                _ => {},
             }
-            _ => {},
+            res = merge_result(cur_match, res);
         }
 
-        match res {
-            FuzzyRuleState::NotMatches => {
-                //println!("J: {:?}", tokens);
-                let rr = vec![Ident(String::new()), LFigureParen];
-                let m = match_tokens(&rr, tokens);
+        {
+            let rr = vec![Ident(String::new()), LFigureParen];
+            let mut cur_match = match_tokens(&rr, tokens);
 
-                //println!("S: {:?}", m);
-                match m {
-                    FuzzyRuleState::Cont(len) if tokens.len() >= len => {
-                        //println!("W: {:?}", tokens);
+            match cur_match {
+                FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                    let mut name = String::new();
+                    match tokens[0].0 {
+                        &Token::Ident(ref n) => { name = n.clone(); },
+                        _ => {},
+                    }
 
-                        let mut name = String::new();
-                        match tokens[0].0 {
-                            &Token::Ident(ref n) => { name = n.clone(); },
-                            _ => {},
-                        }
-
-                        res = FuzzyRuleState::Ready(
-                            rr.len(),
-                            vec![(Tagged::Calling(name), tokens[0].1.clone())],
-                        );
-                    },
-                    _ => { res = m },
-                }
+                    cur_match = FuzzyRuleState::Ready(
+                        rr.len(),
+                        vec![(Tagged::Calling(name), tokens[0].1.clone())],
+                    );
+                },
+                _ => {},
             }
-            _ => {},
+            res = merge_result(cur_match, res);
         }
 
-        match res {
-            FuzzyRuleState::NotMatches => {
-                //println!("J: {:?}", tokens);
-                let rr = vec![Ident(String::new()), LParen];
-                let m = match_tokens(&rr, tokens);
+        {
+            let rr = vec![Ident(String::new()), LParen];
+            let mut cur_match = match_tokens(&rr, tokens);
 
-                //println!("S: {:?}", m);
-                match m {
-                    FuzzyRuleState::Cont(len) if tokens.len() >= len => {
-                        //println!("W: {:?}", tokens);
+            match cur_match {
+                FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                    let mut name = String::new();
+                    match tokens[0].0 {
+                        &Token::Ident(ref n) => { name = n.clone(); },
+                        _ => {},
+                    }
 
-                        let mut name = String::new();
-                        match tokens[0].0 {
-                            &Token::Ident(ref n) => { name = n.clone(); },
-                            _ => {},
-                        }
-
-                        res = FuzzyRuleState::Ready(
-                            rr.len(),
-                            vec![(Tagged::Calling(name), tokens[0].1.clone())],
-                        );
-                    },
-                    _ => { res = m },
-                }
+                    cur_match = FuzzyRuleState::Ready(
+                        rr.len(),
+                        vec![(Tagged::Calling(name), tokens[0].1.clone())],
+                    );
+                },
+                _ => {},
             }
-            _ => {},
+            res = merge_result(cur_match, res);
         }
 
         res
@@ -306,29 +298,32 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
 pub struct FuzzyParser<'a> {
     pub rules: Vec<Box<FuzzyRule<'a>>>,
-    pub size: usize,
+    pub current_size: usize,
     pub cache: VecDeque<(&'a Token, &'a Span)>,
     pub variants: Vec<usize>,
 }
 
 impl<'a> FuzzyParser<'a> {
-    fn new(size: usize, rules: Vec<Box<FuzzyRule<'a>>>) -> FuzzyParser<'a> {
+    fn new(rules: Vec<Box<FuzzyRule<'a>>>) -> FuzzyParser<'a> {
         FuzzyParser {
             rules: rules,
-            size: size,
-            cache: VecDeque::with_capacity(size),
-            variants: Vec::with_capacity(size),
+            current_size: 1,
+            cache: VecDeque::new(),
+            variants: Vec::new(),
         }
     }
 
     fn push(&mut self, lex: (&'a Token, &'a Span)) -> Vec<(Tagged, Span)> {
         //println!("P: {:?}, {:?}", lex.0, lex.1);
-        if self.cache.len() == self.size {
+        if self.cache.len() >= self.current_size {
+            // Delete not more one token at once
             self.cache.pop_front();
         }
 
         self.cache.push_back(lex);
         //println!("{:?}", self.cache);
+
+        let mut new_queue_size = 1;
 
         for rule in &mut self.rules {
             //let () = rule;
@@ -336,7 +331,7 @@ impl<'a> FuzzyParser<'a> {
             //println!("R: {:?}", res);
             match res {
                 FuzzyRuleState::NotMatches => {},
-                FuzzyRuleState::Cont(usize) => {},
+                FuzzyRuleState::Cont(max_size) => { new_queue_size = max(max_size, new_queue_size); },
                 FuzzyRuleState::Ready(tokens_eaten, tagged) => {
                     //println!("Matched! {:?}, {}", self.cache, tokens_eaten);
                     for i in 0..tokens_eaten {
@@ -346,6 +341,8 @@ impl<'a> FuzzyParser<'a> {
                 },
             }
         }
+
+        self.current_size = new_queue_size;
 
         vec![]
     }
@@ -420,8 +417,8 @@ impl CommonParser {
         let kw_rule = Box::new(KwMatch::new());
         let fn_rule = Box::new(FnMatch{});
 
-        let mut parser = FuzzyParser::new(3, vec![fn_rule]);
-        let mut syntax_parser = FuzzyParser::new(1, vec![kw_rule]);
+        let mut parser = FuzzyParser::new(vec![fn_rule]);
+        let mut syntax_parser = FuzzyParser::new(vec![kw_rule]);
 
         let mut syntax_parser_out = vec![];
         let mut parser_out = vec![];
