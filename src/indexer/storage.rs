@@ -8,6 +8,7 @@ use std::io::BufWriter;
 
 use std::collections::HashMap;
 
+use indexer::parser;
 use indexer::parser::{Tagged, CommonParser};
 use indexer::lexer::Span;
 use indexer::gen;
@@ -63,7 +64,7 @@ impl<'a> Index<'a> {
         self.set.push(preparsed);
     }
 
-    pub fn find(&self, path: &str) -> Vec<FileSource> {
+    pub fn find(&self, path: &parser::Path) -> Vec<FileSource> {
         let mut found = vec![];
 
         for preparsed in &self.set {
@@ -286,7 +287,11 @@ impl DeducedFile {
                 b += 1;
             }
         }
-        //println!("M: {:?}/{}", merged, merged.len());
+
+        //println!("Merged: {}", merged.len());
+        // for i in &merged {
+        //     println!("  {:?}", i);
+        // }
 
         merged
     }
@@ -313,17 +318,20 @@ impl PreparsedFile {
         //self.all_tagged.append(&mut ctx.all_tagged);
     }
 
-    pub fn find(&self, path: &str) -> Vec<FileSource> {
+    pub fn find(&self, path: &parser::Path) -> Vec<FileSource> {
         let mut found = vec![];
         for &(ref tagged, ref span) in &self.parsed {
-            //println!("  l: {:?}", tagged);
+
             match tagged {
-                &Tagged::Definition(ref name) if name == path => {
-                    //println!("  DD: {:?}", tagged);
-                    found.push(FileSource{
-                        file: self.file.clone(),
-                        line: span.line,
-                    })
+                &Tagged::Definition(ref use_context) => {
+                    //println!("  l: {:?} {:?} {:?}", tagged, &use_context.reference, path);
+                    if use_context.reference == *path {
+                        //println!("    matched: {:?}", tagged);
+                        found.push(FileSource{
+                            file: self.file.clone(),
+                            line: span.line,
+                        })
+                    }
                 },
                 _ => {},
             }
@@ -337,11 +345,12 @@ impl PreparsedFile {
 
         for &(ref tagged, ref span) in &self.parsed {
             let mut info = None;
-            //println!("QQQ: {:?} {:?}", tagged, span);
+
 
             match tagged {
-                &Tagged::Calling(ref name) => {
-                    let refs = index.find(&name);
+                &Tagged::Calling(ref use_context) => {
+                    //println!("QQQ: {:?} {:?}", tagged, span);
+                    let refs = index.find(&use_context.reference);
                     if refs.len() > 0 {
                         //println!("  c: {:?} {:?}", tagged, span);
                         //println!("  f: {:?} {:?}", ftagged, fspan);

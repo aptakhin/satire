@@ -13,9 +13,59 @@ pub enum ParserState {
 }
 
 #[derive(Debug, Clone)]
+pub struct Path {
+    pub path: Vec<(Token, String)>,
+}
+
+impl Path {
+    fn named(token: Token, name: String) -> Path {
+        Path {
+            path: vec![(token, name)],
+        }
+    }
+
+    fn path(paths: Vec<(Token, String)>) -> Path {
+        Path {
+            path: paths,
+        }
+    }
+}
+
+impl PartialEq for Path {
+    fn eq(&self, other: &Path) -> bool {
+        if self.path.len() != other.path.len() {
+            return false;
+        }
+
+        for i in 0..self.path.len() {
+            if !token_eq(&self.path[i].0, &other.path[i].0) || self.path[i].1 != other.path[i].1 {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UseContext {
+    pub reference: Path,
+    pub used_from: Path,
+}
+
+impl UseContext {
+    fn new(reference: Path, used_from: Path) -> UseContext {
+        UseContext {
+            reference: reference,
+            used_from: used_from,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Tagged {
-    Definition(String),
-    Calling(String),
+    Definition(UseContext),
+    Calling(UseContext),
     Whitespace(WhitespaceType),
     Comment,
     QuotedString,
@@ -200,6 +250,8 @@ impl<'a> FuzzyRule<'a> for FnMatch {
         //println!("Q: {:?}", tokens);
         let mut res = FuzzyRuleState::NotMatches;
 
+        let cur_context = Path::named(Token::Mod, ".".to_string());
+
         {
             let rr = vec![Fn, Ident(String::new()), LParen];
             let mut cur_match = match_tokens(&rr, tokens);
@@ -214,7 +266,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Definition(name), tokens[1].1.clone())],
+                        vec![(Tagged::Definition(UseContext::new(Path::named(Fn, name), cur_context.clone())), tokens[1].1.clone())],
                     );
                 },
                 _ => {},
@@ -236,7 +288,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Definition(name), tokens[1].1.clone())],
+                        vec![(Tagged::Definition(UseContext::new(Path::named(Struct, name), cur_context.clone())), tokens[1].1.clone())],
                     );
                 },
                 _ => {},
@@ -258,7 +310,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Calling(name), tokens[0].1.clone())],
+                        vec![(Tagged::Calling(UseContext::new(Path::named(Struct, name), cur_context.clone())), tokens[0].1.clone())],
                     );
                 },
                 _ => {},
@@ -280,7 +332,38 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Calling(name), tokens[0].1.clone())],
+                        vec![(Tagged::Calling(UseContext::new(Path::named(Fn, name), cur_context.clone())), tokens[0].1.clone())],
+                    );
+                },
+                _ => {},
+            }
+            res = merge_result(cur_match, res);
+        }
+
+        {
+            let rr = vec![Ident(String::new()), Colon2, Ident(String::new()), LParen];
+            let mut cur_match = match_tokens(&rr, tokens);
+
+            match cur_match {
+                FuzzyRuleState::Cont(len) if tokens.len() >= len => {
+                    //println!("Match with colons: {:?}", tokens);
+                    let mut struct_name = String::new();
+                    match tokens[0].0 {
+                        &Token::Ident(ref n) => { struct_name = n.clone(); },
+                        _ => {},
+                    }
+
+                    let mut method_name = String::new();
+                    match tokens[2].0 {
+                        &Token::Ident(ref n) => { method_name = n.clone(); },
+                        _ => {},
+                    }
+
+                    let reference = Path::path(vec![(Token::Struct, struct_name), (Token::Fn, method_name)]);
+
+                    cur_match = FuzzyRuleState::Ready(
+                        rr.len(),
+                        vec![(Tagged::Calling(UseContext::new(reference, cur_context.clone())), tokens[2].1.clone())],
                     );
                 },
                 _ => {},
@@ -377,34 +460,18 @@ impl CommonParser {
     }
 
     pub fn parse(&mut self) -> PreparsedFile {
-        use indexer::lexer::Token::*;
-
         let mut lexer = CommonLexer::new(&self.buffer);
 
-        //self.lexems.push((Token::Whitespace(WhitespaceType::Newline(0)), Span{lo: 0, hi: 0}));
-
-        //let mut line_counter = 0;
-
-        for (tok, mut span) in lexer {
+        for (tok, span) in lexer {
             //println!("L: {:?} {:?} {}", tok, span, line_counter);
             match tok {
                 Token::Eof => {
-                    //span.line = line_counter;
                     self.lexems.push((tok, span));
                     break;
                 }
-                Token::Whitespace(ref e) => {
-                    match e {
-                        &WhitespaceType::Newline => {
-                            //line_counter += 1;
-                        },
-                        _ => {},
-                    }
-                },
                 _ => {},
             }
 
-            //span.line = line_counter;
             self.lexems.push((tok, span));
         }
 

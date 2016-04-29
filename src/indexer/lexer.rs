@@ -71,6 +71,8 @@ pub enum Token {
     LFigureParen,
     RFigureParen,
 
+    Colon2,
+
     Whitespace(WhitespaceType),
     Comment,
 
@@ -151,6 +153,8 @@ lexer! {
 
     r#"{"# => (Token::LFigureParen, text),
     r#"}"# => (Token::RFigureParen, text),
+
+    r#"::"# => (Token::Colon2, text),
 
     r#"."# => (Token::Other, text),
 }

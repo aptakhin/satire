@@ -46,7 +46,7 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
             &Tagged::QuotedString => {
                 fmt = format!("<span style='color: green;'>{}</span>", &cnt)
             },
-            &Tagged::Calling(ref name) => {
+            &Tagged::Calling(ref use_context) => {
                 match info {
                     &Some(ref add_info) => {
                         let refs = add_info.refs.iter().enumerate().fold(String::new(), |res, (_, i)| {
@@ -54,21 +54,16 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
                             res + &format!("<li><a href='/{}#l{}' target='_blank'>{}: {}
                             </a></li>", file, i.line, file, i.line)
                         });
-                        fmt = format!("<a tabindex='0' role='button' data-container='body' data-trigger='focus' data-toggle='popover' data-placement='bottom' data-content=\"<ul>{}</ul>\">{}</a>", refs, name);
+                        fmt = format!("<a tabindex='0' role='button' data-container='body' data-trigger='focus' data-toggle='popover' data-placement='bottom' data-content=\"<ul>{}</ul>\">{}</a>", refs, use_context.reference.path[0].1);
                     },
                     _ => { fmt = cnt.to_string() },
                 }
             },
-            &Tagged::Whitespace(ref wh) => {
-                match wh {
-                    &WhitespaceType::Newline => {
-                        if span.line == 1 {
-                            fmt = format!("<a name=\"l{}\"></a>", span.line);
-                        } else {
-                            fmt = format!("\n<a name=\"l{}\"></a>", span.line);
-                        }
-                    },
-                    _ => { fmt = cnt.to_string() },
+            &Tagged::Whitespace(WhitespaceType::Newline) => {
+                if span.line == 1 {
+                    fmt = format!("<a name=\"l{}\"></a>", span.line);
+                } else {
+                    fmt = format!("\n<a name=\"l{}\"></a>", span.line);
                 }
             },
             _ => {
