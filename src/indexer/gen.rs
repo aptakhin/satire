@@ -26,15 +26,19 @@ impl FileSource {
 //     }
 // }
 
+pub fn escape_html(content: &str) -> String {
+    content.to_string().replace("<", "&lt;").replace(">", "&gt;")
+}
+
 pub fn to_string(content: Rc<String>, items: &[(Tagged, Span, Option<Box<Info>>)]) -> String {
     let mut out = String::new();
 
     let mut till = 0;
     for &(ref tagged, ref span, ref info) in items {
         //println!("A: {}, {}, {}", till, span.lo, span.hi);
-        out.push_str(&content[till..span.lo]);
+        out.push_str(&escape_html(&content[till..span.lo]));
 
-        let cnt = &content[span.lo..span.hi];
+        let cnt = &escape_html(&content[span.lo..span.hi]);
         let fmt;
 
         match tagged {
