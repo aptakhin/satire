@@ -81,18 +81,6 @@ pub enum Token {
     Other,
 }
 
-pub struct CommonLexer<'a> {
-    original: &'a str,
-    remaining: &'a str,
-    line_counter: usize,
-}
-
-impl<'a> CommonLexer<'a> {
-    pub fn new(s: &'a str) -> CommonLexer<'a> {
-        CommonLexer { original: s, remaining: s, line_counter: 0 }
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct Span {
     pub lo: usize,
@@ -118,45 +106,3 @@ impl Span {
         }
     }
 }
-
-//
-// TODO: Refactor this as common code
-//
-// impl<'a> Iterator for CommonLexer<'a> {
-//     type Item = (Token, Span);
-//     fn next(&mut self) -> Option<(Token, Span)> {
-//         if self.line_counter == 0 {
-//             self.line_counter = 1;
-//             let item = Some((
-//                 Token::Whitespace(WhitespaceType::Newline),
-//                 Span {
-//                     lo: 0,
-//                     hi: 0,
-//                     line: self.line_counter,
-//                 }
-//             ));
-//             return item
-//         }
-//
-//         loop {
-//             if let Some((tok, span)) = next_token(&mut self.remaining) {
-//                 match &tok {
-//                     &Token::Whitespace(WhitespaceType::Newline) => {
-//                         self.line_counter += 1;
-//                     },
-//                     _ => {},
-//                 }
-//                 return Some((tok, span_in(span, self.original, self.line_counter)));
-//             } else {
-//                 return Some((
-//                     Token::Eof,
-//                     Span {
-//                         lo: self.original.len(),
-//                         hi: self.original.len(),
-//                         line: self.line_counter,
-//                     }
-//                 ))
-//             };
-//         }
-//     }
-// }

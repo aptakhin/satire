@@ -3,7 +3,7 @@ use std::intrinsics::discriminant_value;
 use std::cmp::{min, max};
 use std::rc::Rc;
 
-use indexer::lexer::{CommonLexer, Token, Span, WhitespaceType};
+use indexer::lexer::{Token, Span, WhitespaceType};
 use indexer::storage::PreparsedFile;
 
 #[derive(Debug)]
@@ -261,62 +261,3 @@ impl<'a> Preprocessing<'a> for CPreprocessing {
 pub trait CommonParser {
     fn parse(&mut self) -> PreparsedFile;
 }
-//
-// impl CommonParser {
-//     pub fn new(file: String, buffer: Rc<String>) -> CommonParser {
-//         CommonParser {
-//             file: file,
-//             buffer: buffer,
-//             lexems: vec![],
-//         }
-//     }
-//
-//     pub fn parse(&mut self) -> PreparsedFile {
-//         let mut lexer = CommonLexer::new(&self.buffer);
-//
-//         for (tok, span) in lexer {
-//             //println!("L: {:?} {:?} {}", tok, span, line_counter);
-//             match tok {
-//                 Token::Eof => {
-//                     self.lexems.push((tok, span));
-//                     break;
-//                 }
-//                 _ => {},
-//             }
-//
-//             self.lexems.push((tok, span));
-//         }
-//
-//         let mut preproc = CPreprocessing{};
-//
-//         let kw_rule = Box::new(KwMatch::new());
-//         let fn_rule = Box::new(FnMatch{});
-//
-//         let mut parser = FuzzyParser::new(vec![fn_rule]);
-//         let mut syntax_parser = FuzzyParser::new(vec![kw_rule]);
-//
-//         let mut syntax_parser_out = vec![];
-//         let mut parser_out = vec![];
-//
-//         for &(ref tok, ref span) in &self.lexems {
-//             let lsyn = syntax_parser.push((tok, span));
-//             if lsyn.len() != 0 {
-//                 //println!("PR: {:?}", lsyn);
-//                 syntax_parser_out.extend(lsyn);
-//             }
-//
-//             if let Some((wtok, wspan)) = preproc.filter((tok, span)) {
-//                 let pres = parser.push((wtok, wspan));
-//                 if pres.len() != 0 {
-//                     //println!("PR: {:?}", res);
-//                     parser_out.extend(pres);
-//                 }
-//             }
-//         }
-//
-//         //println!("SYN: {:?}", syntax_parser_out);
-//         //println!("PRS: {:?}", parser_out);
-//
-//         PreparsedFile::new(self.file.clone(), self.buffer.clone(), syntax_parser_out, parser_out)
-//     }
-// }

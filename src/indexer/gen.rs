@@ -15,17 +15,6 @@ impl FileSource {
     }
 }
 
-// pub fn generate(index: &IndexBuilder, root_dir: &str) {
-//     for parsed_file in &index.set {
-//         let gen = parsed_file.ctx.gen();
-//         to_file(
-//             format!("{}.html", parsed_file.file),
-//             &parsed_file.content,
-//             &gen,
-//         )
-//     }
-// }
-
 pub fn escape_html(content: &str) -> String {
     content.to_string().replace("<", "&lt;").replace(">", "&gt;")
 }

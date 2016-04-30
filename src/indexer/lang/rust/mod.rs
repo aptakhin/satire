@@ -3,7 +3,7 @@ use std::intrinsics::discriminant_value;
 use std::cmp::{min, max};
 use std::rc::Rc;
 
-use indexer::lexer::{CommonLexer, Token, Span, WhitespaceType, span_in};
+use indexer::lexer::{Token, Span, WhitespaceType, span_in};
 use indexer::storage::PreparsedFile;
 use indexer::parser::{CommonParser, Tagged, Preprocessing, CPreprocessing, FuzzyParser, FuzzyRule, FuzzyRuleState,
     match_tokens, merge_result, token_eq, Path, UseContext};
