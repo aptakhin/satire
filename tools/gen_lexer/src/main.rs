@@ -23,25 +23,19 @@ fn main() {
         lines.push(line.unwrap());
     }
 
-    for line in &lines {
-        let enum_token = &line;
-        let keyword = enum_token.to_lowercase();
+    for keyword in &lines {
         println!("T_{},", keyword);
     }
 
     println!("------------------------------");
 
-    for line in &lines {
-        let enum_token = &line;
-        let keyword = enum_token.to_lowercase();
+    for keyword in &lines {
         println!("r#\"{}\"# => (Token::T_{}, text),", keyword, keyword);
     }
 
     println!("------------------------------");
 
-    for line in &lines {
-        let enum_token = &line;
-        let keyword = enum_token.to_lowercase();
+    for keyword in &lines {
         print!(" &T_{} |", keyword);
     }
 

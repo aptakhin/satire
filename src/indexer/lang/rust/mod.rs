@@ -61,8 +61,7 @@ lexer! {
     r#"ref"# => (Token::T_ref, text),
     r#"return"# => (Token::T_return, text),
     r#"static"# => (Token::T_static, text),
-    r#"selfvalue"# => (Token::T_selfvalue, text),
-    r#"selftype"# => (Token::T_selftype, text),
+    r#"self"# => (Token::T_self, text),
     r#"struct"# => (Token::T_struct, text),
     r#"super"# => (Token::T_super, text),
     r#"true"# => (Token::T_true, text),
@@ -220,7 +219,7 @@ impl<'a> FuzzyRule<'a> for KwMatch {
         match tokens[0].0 {
             &T_as | &T_break | &T_crate | &T_else | &T_enum | &T_extern | &T_false | &T_fn |
             &T_for | &T_if | &T_impl | &T_in | &T_let | &T_loop | &T_match | &T_mod | &T_move |
-            &T_mut | &T_pub | &T_ref | &T_return | &T_static | &T_selfvalue | &T_selftype |
+            &T_mut | &T_pub | &T_ref | &T_return | &T_static | &T_self |
             &T_struct | &T_super | &T_true | &T_trait | &T_type | &T_unsafe | &T_use |
             &T_virtual | &T_while | &T_continue | &T_box | &T_const | &T_where | &T_proc |
             &T_alignof | &T_become | &T_offsetof | &T_priv | &T_pure | &T_sizeof | &T_typeof |
