@@ -17,12 +17,32 @@ fn main() {
     let mut lexems_file = File::open(&args[1]).unwrap();
     let mut file = BufReader::new(&lexems_file);
 
-    for line in file.lines() {
+    let mut lines = vec![];
 
-        let enum_token = line.unwrap();
+    for line in file.lines() {
+        lines.push(line.unwrap());
+    }
+
+    for line in &lines {
+        let enum_token = &line;
         let keyword = enum_token.to_lowercase();
-        //println!("r#\"{}\"# => (Token::{}, text),", keyword, enum_token);
-        print!(" &{} |", enum_token);
+        println!("T_{},", keyword);
+    }
+
+    println!("------------------------------");
+
+    for line in &lines {
+        let enum_token = &line;
+        let keyword = enum_token.to_lowercase();
+        println!("r#\"{}\"# => (Token::T_{}, text),", keyword, keyword);
+    }
+
+    println!("------------------------------");
+
+    for line in &lines {
+        let enum_token = &line;
+        let keyword = enum_token.to_lowercase();
+        print!(" &T_{} |", keyword);
     }
 
     //panic!("No");

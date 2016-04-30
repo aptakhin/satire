@@ -39,57 +39,58 @@ lexer! {
     r#"\"(?:[^"\\]|\\.)*\""# => (Token::QuotedString, text),
 
 
-    r#"as"# => (Token::As, text),
-    r#"break"# => (Token::Break, text),
-    r#"crate"# => (Token::Crate, text),
-    r#"else"# => (Token::Else, text),
-    r#"enum"# => (Token::Enum, text),
-    r#"extern"# => (Token::Extern, text),
-    r#"false"# => (Token::False, text),
-    r#"fn"# => (Token::Fn, text),
-    r#"for"# => (Token::For, text),
-    r#"if"# => (Token::If, text),
-    r#"impl"# => (Token::Impl, text),
-    r#"in"# => (Token::In, text),
-    r#"let"# => (Token::Let, text),
-    r#"loop"# => (Token::Loop, text),
-    r#"match"# => (Token::Match, text),
-    r#"mod"# => (Token::Mod, text),
-    r#"move"# => (Token::Move, text),
-    r#"mut"# => (Token::Mut, text),
-    r#"pub"# => (Token::Pub, text),
-    r#"ref"# => (Token::Ref, text),
-    r#"return"# => (Token::Return, text),
-    r#"static"# => (Token::Static, text),
-    r#"self"# => (Token::SelfType, text),
-    r#"struct"# => (Token::Struct, text),
-    r#"super"# => (Token::Super, text),
-    r#"true"# => (Token::True, text),
-    r#"trait"# => (Token::Trait, text),
-    r#"type"# => (Token::Type, text),
-    r#"unsafe"# => (Token::Unsafe, text),
-    r#"use"# => (Token::Use, text),
-    r#"virtual"# => (Token::Virtual, text),
-    r#"while"# => (Token::While, text),
-    r#"continue"# => (Token::Continue, text),
-    r#"box"# => (Token::BoxT, text),
-    r#"const"# => (Token::Const, text),
-    r#"where"# => (Token::Where, text),
-    r#"proc"# => (Token::Proc, text),
-    r#"alignof"# => (Token::Alignof, text),
-    r#"become"# => (Token::Become, text),
-    r#"offsetof"# => (Token::Offsetof, text),
-    r#"priv"# => (Token::Priv, text),
-    r#"pure"# => (Token::Pure, text),
-    r#"sizeof"# => (Token::Sizeof, text),
-    r#"typeof"# => (Token::Typeof, text),
-    r#"unsized"# => (Token::Unsized, text),
-    r#"yield"# => (Token::Yield, text),
-    r#"do"# => (Token::Do, text),
-    r#"abstract"# => (Token::Abstract, text),
-    r#"final"# => (Token::Final, text),
-    r#"override"# => (Token::Override, text),
-    r#"macro"# => (Token::Macro, text),
+    r#"as"# => (Token::T_as, text),
+    r#"break"# => (Token::T_break, text),
+    r#"crate"# => (Token::T_crate, text),
+    r#"else"# => (Token::T_else, text),
+    r#"enum"# => (Token::T_enum, text),
+    r#"extern"# => (Token::T_extern, text),
+    r#"false"# => (Token::T_false, text),
+    r#"fn"# => (Token::T_fn, text),
+    r#"for"# => (Token::T_for, text),
+    r#"if"# => (Token::T_if, text),
+    r#"impl"# => (Token::T_impl, text),
+    r#"in"# => (Token::T_in, text),
+    r#"let"# => (Token::T_let, text),
+    r#"loop"# => (Token::T_loop, text),
+    r#"match"# => (Token::T_match, text),
+    r#"mod"# => (Token::T_mod, text),
+    r#"move"# => (Token::T_move, text),
+    r#"mut"# => (Token::T_mut, text),
+    r#"pub"# => (Token::T_pub, text),
+    r#"ref"# => (Token::T_ref, text),
+    r#"return"# => (Token::T_return, text),
+    r#"static"# => (Token::T_static, text),
+    r#"selfvalue"# => (Token::T_selfvalue, text),
+    r#"selftype"# => (Token::T_selftype, text),
+    r#"struct"# => (Token::T_struct, text),
+    r#"super"# => (Token::T_super, text),
+    r#"true"# => (Token::T_true, text),
+    r#"trait"# => (Token::T_trait, text),
+    r#"type"# => (Token::T_type, text),
+    r#"unsafe"# => (Token::T_unsafe, text),
+    r#"use"# => (Token::T_use, text),
+    r#"virtual"# => (Token::T_virtual, text),
+    r#"while"# => (Token::T_while, text),
+    r#"continue"# => (Token::T_continue, text),
+    r#"box"# => (Token::T_box, text),
+    r#"const"# => (Token::T_const, text),
+    r#"where"# => (Token::T_where, text),
+    r#"proc"# => (Token::T_proc, text),
+    r#"alignof"# => (Token::T_alignof, text),
+    r#"become"# => (Token::T_become, text),
+    r#"offsetof"# => (Token::T_offsetof, text),
+    r#"priv"# => (Token::T_priv, text),
+    r#"pure"# => (Token::T_pure, text),
+    r#"sizeof"# => (Token::T_sizeof, text),
+    r#"typeof"# => (Token::T_typeof, text),
+    r#"unsized"# => (Token::T_unsized, text),
+    r#"yield"# => (Token::T_yield, text),
+    r#"do"# => (Token::T_do, text),
+    r#"abstract"# => (Token::T_abstract, text),
+    r#"final"# => (Token::T_final, text),
+    r#"override"# => (Token::T_override, text),
+    r#"macro"# => (Token::T_macro, text),
 
     r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::Ident(text.to_owned()), text),
 
@@ -217,13 +218,14 @@ impl<'a> FuzzyRule<'a> for KwMatch {
         //println!("Q: {:?}", tokens[0].0);
 
         match tokens[0].0 {
-            &As | &Break | &Crate | &Else | &Enum | &Extern | &False | &Fn | &For | &If |
-            &Impl | &In | &Let | &Loop | &Match | &Mod | &Move | &Mut | &Pub | &Ref |
-            &Return | &Static | &SelfType | &Struct | &Super | &True |
-            &Trait | &Type | &Unsafe | &Use | &Virtual | &While | &Continue | &BoxT |
-            &Const | &Where | &Proc | &Alignof | &Become | &Offsetof | &Priv | &Pure |
-            &Sizeof | &Typeof | &Unsized | &Yield | &Do | &Abstract | &Final | &Override |
-            &Macro => FuzzyRuleState::Ready(
+            &T_as | &T_break | &T_crate | &T_else | &T_enum | &T_extern | &T_false | &T_fn |
+            &T_for | &T_if | &T_impl | &T_in | &T_let | &T_loop | &T_match | &T_mod | &T_move |
+            &T_mut | &T_pub | &T_ref | &T_return | &T_static | &T_selfvalue | &T_selftype |
+            &T_struct | &T_super | &T_true | &T_trait | &T_type | &T_unsafe | &T_use |
+            &T_virtual | &T_while | &T_continue | &T_box | &T_const | &T_where | &T_proc |
+            &T_alignof | &T_become | &T_offsetof | &T_priv | &T_pure | &T_sizeof | &T_typeof |
+            &T_unsized | &T_yield | &T_do | &T_abstract | &T_final | &T_override | &T_macro
+            => FuzzyRuleState::Ready(
                 1,
                 vec![(Tagged::Keyword(tokens[0].0.clone()), tokens[0].1.clone())],
             ),
@@ -261,10 +263,10 @@ impl<'a> FuzzyRule<'a> for FnMatch {
         //println!("Q: {:?}", tokens);
         let mut res = FuzzyRuleState::NotMatches;
 
-        let cur_context = Path::named(Token::Mod, ".".to_string());
+        let cur_context = Path::named(T_mod, ".".to_string());
 
         {
-            let rr = vec![Fn, Ident(String::new()), LParen];
+            let rr = vec![T_fn, Ident(String::new()), LParen];
             let mut cur_match = match_tokens(&rr, tokens);
 
             match cur_match {
@@ -277,7 +279,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Definition(UseContext::new(Path::named(Fn, name), cur_context.clone())), tokens[1].1.clone())],
+                        vec![(Tagged::Definition(UseContext::new(Path::named(T_fn, name), cur_context.clone())), tokens[1].1.clone())],
                     );
                 },
                 _ => {},
@@ -286,7 +288,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
         }
 
         {
-            let rr = vec![Struct, Ident(String::new()), LFigureParen];
+            let rr = vec![T_struct, Ident(String::new()), LFigureParen];
             let mut cur_match = match_tokens(&rr, tokens);
 
             match cur_match {
@@ -299,7 +301,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Definition(UseContext::new(Path::named(Struct, name), cur_context.clone())), tokens[1].1.clone())],
+                        vec![(Tagged::Definition(UseContext::new(Path::named(T_struct, name), cur_context.clone())), tokens[1].1.clone())],
                     );
                 },
                 _ => {},
@@ -321,7 +323,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Calling(UseContext::new(Path::named(Struct, name), cur_context.clone())), tokens[0].1.clone())],
+                        vec![(Tagged::Calling(UseContext::new(Path::named(T_struct, name), cur_context.clone())), tokens[0].1.clone())],
                     );
                 },
                 _ => {},
@@ -343,7 +345,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),
-                        vec![(Tagged::Calling(UseContext::new(Path::named(Fn, name), cur_context.clone())), tokens[0].1.clone())],
+                        vec![(Tagged::Calling(UseContext::new(Path::named(T_fn, name), cur_context.clone())), tokens[0].1.clone())],
                     );
                 },
                 _ => {},
@@ -370,7 +372,7 @@ impl<'a> FuzzyRule<'a> for FnMatch {
                         _ => {},
                     }
 
-                    let reference = Path::path(vec![(Token::Struct, struct_name), (Token::Fn, method_name)]);
+                    let reference = Path::path(vec![(T_struct, struct_name), (T_fn, method_name)]);
 
                     cur_match = FuzzyRuleState::Ready(
                         rr.len(),

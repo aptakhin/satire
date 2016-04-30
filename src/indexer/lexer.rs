@@ -7,63 +7,65 @@ pub enum WhitespaceType {
     //Spaces(i32),
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Debug, Clone)]
 pub enum Token {
     NoToken,
     Ident(String),
     QuotedString,
 
-    As,
-    Break,
-    Crate,
-    Else,
-    Enum,
-    Extern,
-    False,
-    Fn,
-    For,
-    If,
-    Impl,
-    In,
-    Let,
-    Loop,
-    Match,
-    Mod,
-    Move,
-    Mut,
-    Pub,
-    Ref,
-    Return,
-    Static,
-    SelfType,
-    Struct,
-    Super,
-    True,
-    Trait,
-    Type,
-    Unsafe,
-    Use,
-    Virtual,
-    While,
-    Continue,
-    BoxT,
-    Const,
-    Where,
-    Proc,
-    Alignof,
-    Become,
-    Offsetof,
-    Priv,
-    Pure,
-    Sizeof,
-    Typeof,
-    Unsized,
-    Yield,
-    Do,
-    Abstract,
-    Final,
-    Override,
-    Macro,
+    T_as,
+    T_break,
+    T_crate,
+    T_else,
+    T_enum,
+    T_extern,
+    T_false,
+    T_fn,
+    T_for,
+    T_if,
+    T_impl,
+    T_in,
+    T_let,
+    T_loop,
+    T_match,
+    T_mod,
+    T_move,
+    T_mut,
+    T_pub,
+    T_ref,
+    T_return,
+    T_static,
+    T_selfvalue,
+    T_selftype,
+    T_struct,
+    T_super,
+    T_true,
+    T_trait,
+    T_type,
+    T_unsafe,
+    T_use,
+    T_virtual,
+    T_while,
+    T_continue,
+    T_box,
+    T_const,
+    T_where,
+    T_proc,
+    T_alignof,
+    T_become,
+    T_offsetof,
+    T_priv,
+    T_pure,
+    T_sizeof,
+    T_typeof,
+    T_unsized,
+    T_yield,
+    T_do,
+    T_abstract,
+    T_final,
+    T_override,
+    T_macro,
 
     LParen,
     RParen,
@@ -78,85 +80,6 @@ pub enum Token {
 
     Eof,
     Other,
-}
-
-lexer! {
-    fn next_token(text: 'a) -> (Token, &'a str);
-
-    r#"[\n]"# => (Token::Whitespace(WhitespaceType::Newline), text),
-    //r#"\r\n"# => (Token::Whitespace(WhitespaceType::Newline), text),
-    r#"[ \t]+"# => (Token::Whitespace(WhitespaceType::Spaces), text),
-    // "C-style" comments (/* .. */) - can't contain "*/"
-    r#"/[*](~(.*[*]/.*))[*]/"# => (Token::Comment, text),
-    // "C++-style" comments (// ...)
-    r#"//[^\n]*"# => (Token::Comment, text),
-
-    r#"\"(?:[^"\\]|\\.)*\""# => (Token::QuotedString, text),
-
-
-    r#"as"# => (Token::As, text),
-    r#"break"# => (Token::Break, text),
-    r#"crate"# => (Token::Crate, text),
-    r#"else"# => (Token::Else, text),
-    r#"enum"# => (Token::Enum, text),
-    r#"extern"# => (Token::Extern, text),
-    r#"false"# => (Token::False, text),
-    r#"fn"# => (Token::Fn, text),
-    r#"for"# => (Token::For, text),
-    r#"if"# => (Token::If, text),
-    r#"impl"# => (Token::Impl, text),
-    r#"in"# => (Token::In, text),
-    r#"let"# => (Token::Let, text),
-    r#"loop"# => (Token::Loop, text),
-    r#"match"# => (Token::Match, text),
-    r#"mod"# => (Token::Mod, text),
-    r#"move"# => (Token::Move, text),
-    r#"mut"# => (Token::Mut, text),
-    r#"pub"# => (Token::Pub, text),
-    r#"ref"# => (Token::Ref, text),
-    r#"return"# => (Token::Return, text),
-    r#"static"# => (Token::Static, text),
-    r#"self"# => (Token::SelfType, text),
-    r#"struct"# => (Token::Struct, text),
-    r#"super"# => (Token::Super, text),
-    r#"true"# => (Token::True, text),
-    r#"trait"# => (Token::Trait, text),
-    r#"type"# => (Token::Type, text),
-    r#"unsafe"# => (Token::Unsafe, text),
-    r#"use"# => (Token::Use, text),
-    r#"virtual"# => (Token::Virtual, text),
-    r#"while"# => (Token::While, text),
-    r#"continue"# => (Token::Continue, text),
-    r#"box"# => (Token::BoxT, text),
-    r#"const"# => (Token::Const, text),
-    r#"where"# => (Token::Where, text),
-    r#"proc"# => (Token::Proc, text),
-    r#"alignof"# => (Token::Alignof, text),
-    r#"become"# => (Token::Become, text),
-    r#"offsetof"# => (Token::Offsetof, text),
-    r#"priv"# => (Token::Priv, text),
-    r#"pure"# => (Token::Pure, text),
-    r#"sizeof"# => (Token::Sizeof, text),
-    r#"typeof"# => (Token::Typeof, text),
-    r#"unsized"# => (Token::Unsized, text),
-    r#"yield"# => (Token::Yield, text),
-    r#"do"# => (Token::Do, text),
-    r#"abstract"# => (Token::Abstract, text),
-    r#"final"# => (Token::Final, text),
-    r#"override"# => (Token::Override, text),
-    r#"macro"# => (Token::Macro, text),
-
-    r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::Ident(text.to_owned()), text),
-
-    r#"\("# => (Token::LParen, text),
-    r#"\)"# => (Token::RParen, text),
-
-    r#"{"# => (Token::LFigureParen, text),
-    r#"}"# => (Token::RFigureParen, text),
-
-    r#"::"# => (Token::Colon2, text),
-
-    r#"."# => (Token::Other, text),
 }
 
 pub struct CommonLexer<'a> {
@@ -200,41 +123,41 @@ impl Span {
 //
 // TODO: Refactor this as common code
 //
-impl<'a> Iterator for CommonLexer<'a> {
-    type Item = (Token, Span);
-    fn next(&mut self) -> Option<(Token, Span)> {
-        if self.line_counter == 0 {
-            self.line_counter = 1;
-            let item = Some((
-                Token::Whitespace(WhitespaceType::Newline),
-                Span {
-                    lo: 0,
-                    hi: 0,
-                    line: self.line_counter,
-                }
-            ));
-            return item
-        }
-
-        loop {
-            if let Some((tok, span)) = next_token(&mut self.remaining) {
-                match &tok {
-                    &Token::Whitespace(WhitespaceType::Newline) => {
-                        self.line_counter += 1;
-                    },
-                    _ => {},
-                }
-                return Some((tok, span_in(span, self.original, self.line_counter)));
-            } else {
-                return Some((
-                    Token::Eof,
-                    Span {
-                        lo: self.original.len(),
-                        hi: self.original.len(),
-                        line: self.line_counter,
-                    }
-                ))
-            };
-        }
-    }
-}
+// impl<'a> Iterator for CommonLexer<'a> {
+//     type Item = (Token, Span);
+//     fn next(&mut self) -> Option<(Token, Span)> {
+//         if self.line_counter == 0 {
+//             self.line_counter = 1;
+//             let item = Some((
+//                 Token::Whitespace(WhitespaceType::Newline),
+//                 Span {
+//                     lo: 0,
+//                     hi: 0,
+//                     line: self.line_counter,
+//                 }
+//             ));
+//             return item
+//         }
+//
+//         loop {
+//             if let Some((tok, span)) = next_token(&mut self.remaining) {
+//                 match &tok {
+//                     &Token::Whitespace(WhitespaceType::Newline) => {
+//                         self.line_counter += 1;
+//                     },
+//                     _ => {},
+//                 }
+//                 return Some((tok, span_in(span, self.original, self.line_counter)));
+//             } else {
+//                 return Some((
+//                     Token::Eof,
+//                     Span {
+//                         lo: self.original.len(),
+//                         hi: self.original.len(),
+//                         line: self.line_counter,
+//                     }
+//                 ))
+//             };
+//         }
+//     }
+// }
