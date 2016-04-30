@@ -178,7 +178,7 @@ pub struct Span {
     pub line: usize,
 }
 
-fn span_in(s: &str, t: &str, line: usize) -> Span {
+pub fn span_in(s: &str, t: &str, line: usize) -> Span {
     let lo = s.as_ptr() as usize - t.as_ptr() as usize;
     Span {
         lo: lo,
@@ -197,6 +197,9 @@ impl Span {
     }
 }
 
+//
+// TODO: Refactor this as common code
+//
 impl<'a> Iterator for CommonLexer<'a> {
     type Item = (Token, Span);
     fn next(&mut self) -> Option<(Token, Span)> {

@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 use indexer::parser;
 use indexer::parser::{Tagged, CommonParser};
+use indexer::lang::rust::RustParser;
 use indexer::lexer::Span;
 use indexer::gen;
 
@@ -216,7 +217,7 @@ impl IndexBuilder {
 
         if handle {
             let source = SourceFile::new(file.to_string().clone());
-            let mut parser = CommonParser::new(file[root_dir.len()..].to_string(), source.content.clone());
+            let mut parser = RustParser::new(file[root_dir.len()..].to_string(), source.content.clone());
             let preparsed = parser.parse();
             //println!("  f: {}", ctx.pars);
             self.set.push(ParsedFile{
