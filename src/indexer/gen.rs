@@ -1,6 +1,7 @@
 use std::io::prelude::*;
 use std::io::BufWriter;
 use std::fs::File;
+use std::rc::Rc;
 
 use indexer::parser::Tagged;
 use indexer::lexer::Span;
@@ -25,7 +26,7 @@ impl FileSource {
 //     }
 // }
 
-pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> String {
+pub fn to_string(content: Rc<String>, items: &[(Tagged, Span, Option<Box<Info>>)]) -> String {
     let mut out = String::new();
 
     let mut till = 0;
@@ -81,7 +82,7 @@ pub fn to_string(content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) -> 
     out
 }
 
-pub fn to_file(filename: String, content: &str, items: &[(Tagged, Span, Option<Box<Info>>)]) {
+pub fn to_file(filename: String, content: Rc<String>, items: &[(Tagged, Span, Option<Box<Info>>)]) {
     let output = File::create(filename).unwrap();
     let mut writer = BufWriter::new(output);
     let out = to_string(content, items);

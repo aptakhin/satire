@@ -1,6 +1,7 @@
 use std::collections::vec_deque::VecDeque;
 use std::intrinsics::discriminant_value;
 use std::cmp::{min, max};
+use std::rc::Rc;
 
 use indexer::lexer::{CommonLexer, Token, Span, WhitespaceType};
 use indexer::storage::PreparsedFile;
@@ -446,12 +447,12 @@ impl<'a> Preprocessing<'a> for CPreprocessing {
 
 pub struct CommonParser {
     pub file: String,
-    pub buffer: String,
+    pub buffer: Rc<String>,
     pub lexems: Vec<(Token, Span)>,
 }
 
 impl CommonParser {
-    pub fn new(file: String, buffer: String) -> CommonParser {
+    pub fn new(file: String, buffer: Rc<String>) -> CommonParser {
         CommonParser {
             file: file,
             buffer: buffer,
@@ -505,6 +506,6 @@ impl CommonParser {
         //println!("SYN: {:?}", syntax_parser_out);
         //println!("PRS: {:?}", parser_out);
 
-        PreparsedFile::new(self.file.clone(), syntax_parser_out, parser_out)
+        PreparsedFile::new(self.file.clone(), self.buffer.clone(), syntax_parser_out, parser_out)
     }
 }

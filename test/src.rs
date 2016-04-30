@@ -11,7 +11,6 @@ impl Foo {
 }
 
 fn to_string(a: &str) -> String {
-    
     String::new("abc")
 }
 

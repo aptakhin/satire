@@ -5,6 +5,7 @@ use std::io;
 use std::fs::{self, DirEntry, File};
 use std::path::{Path, PathBuf};
 use std::io::BufWriter;
+use std::rc::Rc;
 
 use std::collections::HashMap;
 
@@ -15,7 +16,7 @@ use indexer::gen;
 
 pub struct SourceFile {
     pub filename: String,
-    pub content: String,
+    pub content: Rc<String>,
 }
 
 impl SourceFile {
@@ -27,7 +28,7 @@ impl SourceFile {
 
         SourceFile {
             filename: filename.clone(),
-            content: content,
+            content: Rc::new(content),
         }
     }
 }
@@ -83,7 +84,7 @@ impl<'a> Index<'a> {
 
 pub struct ParsedFile {
     pub file: String,
-    pub content: String,
+    pub content: Rc<String>,
     pub preparsed: PreparsedFile,
     //pub ctx: Context,
 }
@@ -133,7 +134,7 @@ impl IndexBuilder {
             deduced.push(deduced_file);
         }
 
-        for i in 0..self.set.len() {
+        for i in 0..deduced.len() {
             let generated = deduced[i].gen();
 
             //let template = mustache::compile_path("web/code_template.html").unwrap();
@@ -159,7 +160,7 @@ impl IndexBuilder {
 
             template = template.replace("{{tree}}", &tree);
 
-            let code = gen::to_string(&self.set[i].content, &generated[..]);
+            let code = gen::to_string(deduced[i].content.clone(), &generated[..]);
             template = template.replace("{{code}}", &code);
 
             let title = format!("{}", self.set[i].file);
@@ -240,16 +241,16 @@ pub struct Context {
 
 pub struct DeducedFile {
     pub file: String,
-    //pub content: &'a str,
+    pub content: Rc<String>,
     pub synt: Vec<(Tagged, Span, Option<Box<Info>>)>,
     pub pars: Vec<(Tagged, Span, Option<Box<Info>>)>,
 }
 
 impl DeducedFile {
-    pub fn new(file: String, synt: Vec<(Tagged, Span, Option<Box<Info>>)>, pars: Vec<(Tagged, Span, Option<Box<Info>>)>) -> DeducedFile {
+    pub fn new(file: String, content: Rc<String>, synt: Vec<(Tagged, Span, Option<Box<Info>>)>, pars: Vec<(Tagged, Span, Option<Box<Info>>)>) -> DeducedFile {
         DeducedFile {
             file: file,
-            //content: content,
+            content: content,
             synt: synt,
             pars: pars,
         }
@@ -299,16 +300,16 @@ impl DeducedFile {
 
 pub struct PreparsedFile {
     pub file: String,
-    //pub content: &'a str,
+    pub content: Rc<String>,
     pub syntax: Vec<(Tagged, Span)>,
     pub parsed: Vec<(Tagged, Span)>,
 }
 
 impl PreparsedFile {
-    pub fn new(file: String, syntax: Vec<(Tagged, Span)>, parsed: Vec<(Tagged, Span)>) -> PreparsedFile {
+    pub fn new(file: String, content: Rc<String>, syntax: Vec<(Tagged, Span)>, parsed: Vec<(Tagged, Span)>) -> PreparsedFile {
         PreparsedFile {
             file: file,
-            //content: content,
+            content: content,
             syntax: syntax,
             parsed: parsed,
         }
@@ -375,99 +376,6 @@ impl PreparsedFile {
         }
         synt.push((Tagged::Eof, Span::end(), None));
 
-        DeducedFile::new(self.file.clone(), pars, synt)
+        DeducedFile::new(self.file.clone(), self.content.clone(), pars, synt)
     }
 }
-//
-// impl Context {
-//     pub fn new(file: String, syntax: Vec<(Tagged, Span)>, parsed: Vec<(Tagged, Span)>) -> Context {
-//         Context {
-//             file: file,
-//             syntax: syntax,
-//             parsed: parsed,
-//             synt: vec![],
-//             pars: vec![],
-//         }
-//     }
-//
-//     pub fn merge(&mut self, mut ctx: Context) {
-//         //self.all_tagged.append(&mut ctx.all_tagged);
-//     }
-//
-//     pub fn find(&self, path: &str) -> Vec<FileSource> {
-//         let mut found = vec![];
-//         for &(ref tagged, ref span) in &self.parsed {
-//             //println!("  l: {:?}", tagged);
-//             match tagged {
-//                 &Tagged::Definition(ref name) if name == path => {
-//                     found.push(FileSource{
-//                         file: self.file.clone(),
-//                         line: span.line,
-//                     })
-//                 },
-//                 _ => {},
-//             }
-//         }
-//         found
-//     }
-//
-//     pub fn find_with_index(&self, path: &str, index: &Index) -> Vec<FileSource> {
-//         let mut found = index.find(path);
-//         found.append(&mut self.find(path));
-//         found
-//     }
-//
-//     pub fn deduce(&mut self, index: &Index) {
-//         for &(ref tagged, ref span) in &self.parsed {
-//             let mut info = None;
-//             //println!("QQQ: {:?} {:?}", tagged, span);
-//
-//             match tagged {
-//                 &Tagged::Calling(ref name) => {
-//                     let refs = self.find_with_index(&name, index);
-//                     if refs.len() > 0 {
-//                         //println!("  c: {:?} {:?}", tagged, span);
-//                         //println!("  f: {:?} {:?}", ftagged, fspan);
-//
-//                         info = Some(Box::new(Info{
-//                             refs: refs,
-//                         }));
-//                     }
-//                 },
-//                 _ => {},
-//             }
-//
-//             self.pars.push((tagged.clone(), span.clone(), info));
-//             //println!("E: {}", pars.len());
-//         }
-//         self.pars.push((Tagged::Eof, Span::end(), None));
-//
-//         let mut synt: Vec<(Tagged, Span, Option<Box<Info>>)> = vec![];
-//         for i in 0..self.syntax.len() {
-//             let &(ref tagged, ref span) = &self.syntax[i];
-//
-//             self.synt.push((tagged.clone(), span.clone(), None));
-//         }
-//         self.synt.push((Tagged::Eof, Span::end(), None));
-//     }
-// }
-
-// pub struct Storage {
-//     pub ctx: Context,
-// }
-//
-// impl Storage {
-//     pub fn new() -> Storage {
-//         Storage {
-//             ctx: Context::new(),
-//         }
-//     }
-//
-//     pub fn merge(&mut self, mut merge_ctx: Context) {
-//         self.ctx.merge(merge_ctx);
-//     }
-//
-//     pub fn gen(&mut self) {
-//         //self.ctx.gen();
-//     }
-// }
