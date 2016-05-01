@@ -36,7 +36,7 @@ lexer! {
     // "C++-style" comments (// ...)
     r#"//[^\n]*"# => (Token::Comment, text),
 
-    r#"\"(?:[^"\\]|\\.)*\""# => (Token::QuotedString, text),
+    r#""[^\n"]*""# => (Token::QuotedString, text),
 
 
     r#"as"# => (Token::T_as, text),
