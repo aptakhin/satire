@@ -2,7 +2,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::fmt;
 use std::io;
-use std::fs::{self, DirEntry, File};
+use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::io::BufWriter;
 use std::rc::Rc;
@@ -75,19 +75,12 @@ impl<'a> Index<'a> {
 
         found
     }
-
-    // pub fn build(&mut self) -> Index {
-    //     Index {
-    //         set: self.set,
-    //     }
-    // }
 }
 
 pub struct ParsedFile {
     pub file: String,
     pub content: Rc<String>,
     pub preparsed: PreparsedFile,
-    //pub ctx: Context,
 }
 
 pub struct IndexBuilder {
@@ -172,13 +165,8 @@ impl IndexBuilder {
             let res = fs::create_dir_all(dir);
             let output = File::create(format!("web/{}.html", self.set[i].file)).unwrap();
             let mut writer = BufWriter::new(output);
-            //let out = to_string(content, items);
-            //writer.write(out.as_bytes()).unwrap();
 
-            //template.render_data(&mut writer, &template);
             writer.write(template.as_bytes()).unwrap();
-
-            //gen::to_file(format!("{}.html", self.set[i].file), &self.set[i].content, &generated[..]);
         }
     }
 
@@ -230,15 +218,6 @@ impl IndexBuilder {
         Ok(())
     }
 }
-
-pub struct Context {
-    pub file: String,
-    pub syntax: Vec<(Tagged, Span)>,
-    pub parsed: Vec<(Tagged, Span)>,
-    pub synt: Vec<(Tagged, Span, Option<Box<Info>>)>,
-    pub pars: Vec<(Tagged, Span, Option<Box<Info>>)>,
-}
-
 
 pub struct DeducedFile {
     pub file: String,
@@ -314,10 +293,6 @@ impl PreparsedFile {
             syntax: syntax,
             parsed: parsed,
         }
-    }
-
-    pub fn merge(&mut self, mut ctx: Context) {
-        //self.all_tagged.append(&mut ctx.all_tagged);
     }
 
     pub fn find(&self, path: &parser::Path) -> Vec<FileSource> {

@@ -6,7 +6,7 @@ use std::rc::Rc;
 use indexer::parser::Tagged;
 use indexer::lexer::Span;
 use indexer::lexer::WhitespaceType;
-use indexer::storage::{FileSource, Info, IndexBuilder, ParsedFile};
+use indexer::storage::{FileSource, Info};
 
 impl FileSource {
     pub fn render_html(&self, name: &str) -> String {
@@ -31,7 +31,7 @@ pub fn to_string(content: Rc<String>, items: &[(Tagged, Span, Option<Box<Info>>)
         let fmt;
 
         match tagged {
-            &Tagged::Keyword(ref kw) => {
+            &Tagged::Keyword(_) => {
                 fmt = format!("<b>{}</b>", &cnt)
             },
             &Tagged::Comment => {

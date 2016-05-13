@@ -1,7 +1,6 @@
 extern crate satire;
 
-use satire::indexer::storage::{SourceFile, Index, IndexBuilder};
-use satire::indexer::gen;
+use satire::indexer::storage::{IndexBuilder};
 
 fn main() {
     let root_dir = "test/";

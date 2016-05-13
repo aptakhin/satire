@@ -1,12 +1,10 @@
 use std::collections::vec_deque::VecDeque;
-use std::intrinsics::discriminant_value;
-use std::cmp::{min, max};
 use std::rc::Rc;
 
 use indexer::lexer::{Token, Span, WhitespaceType, span_in};
 use indexer::storage::PreparsedFile;
 use indexer::parser::{CommonParser, Tagged, Preprocessing, CPreprocessing, FuzzyParser, FuzzyRule, FuzzyRuleState,
-    match_tokens, merge_result, token_eq, Path, UseContext};
+    match_tokens, merge_result, Path, UseContext};
 
 
 pub struct RustParser {
@@ -161,7 +159,7 @@ pub struct FnMatch;
 
 impl CommonParser for RustParser {
     fn parse(&mut self) -> PreparsedFile {
-        let mut lexer = RustLexer::new(&self.buffer);
+        let lexer = RustLexer::new(&self.buffer);
 
         for (tok, span) in lexer {
             //println!("L: {:?} {:?} {}", tok, span, line_counter);

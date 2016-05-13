@@ -1,7 +1,6 @@
 use std::collections::vec_deque::VecDeque;
 use std::intrinsics::discriminant_value;
 use std::cmp::{min, max};
-use std::rc::Rc;
 
 use indexer::lexer::{Token, Span, WhitespaceType};
 use indexer::storage::PreparsedFile;
@@ -227,7 +226,7 @@ impl<'a> FuzzyParser<'a> {
                 FuzzyRuleState::Cont(max_size) => { new_queue_size = max(max_size, new_queue_size); },
                 FuzzyRuleState::Ready(tokens_eaten, tagged) => {
                     //println!("Matched! {:?}, {}", self.cache, tokens_eaten);
-                    for i in 0..tokens_eaten {
+                    for _ in 0..tokens_eaten {
                         self.cache.pop_front();
                     }
                     return tagged
